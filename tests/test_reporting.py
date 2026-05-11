@@ -42,6 +42,7 @@ from ix_autonomy_assurance_case_runtime.scenarios import (
 from ix_autonomy_assurance_case_runtime.traceability import (
     MissionNeed,
     Requirement,
+    TraceabilityGraph,
     build_traceability_graph,
 )
 from ix_autonomy_assurance_case_runtime.verification import VerificationEngine
@@ -195,7 +196,7 @@ def build_scenario_catalog(
     )
 
 
-def build_traceability_graph_instance() -> object:
+def build_traceability_graph_instance() -> TraceabilityGraph:
     return build_traceability_graph(
         mission_need=MissionNeed(
             need_id="MN-001",
@@ -226,7 +227,7 @@ def build_report() -> AssuranceReport:
             scenario_id="SCN-001",
             telemetry=RuntimeTelemetry(
                 values={
-                    "navigation_confidence": 0.92,
+                    "navigation_confidence": 0.62,
                     "power_margin_pct": 80.0,
                     "comms_link_active": True,
                 },
@@ -382,7 +383,7 @@ def test_report_generator_identifies_assurance_gaps() -> None:
             scenario_id="SCN-001",
             telemetry=RuntimeTelemetry(
                 values={
-                    "navigation_confidence": 0.92,
+                    "navigation_confidence": 0.62,
                     "power_margin_pct": 80.0,
                     "comms_link_active": True,
                 },
@@ -422,7 +423,7 @@ def test_report_generator_rejects_case_id_mismatch() -> None:
             scenario_id="SCN-001",
             telemetry=RuntimeTelemetry(
                 values={
-                    "navigation_confidence": 0.92,
+                    "navigation_confidence": 0.62,
                     "power_margin_pct": 80.0,
                     "comms_link_active": True,
                 },
