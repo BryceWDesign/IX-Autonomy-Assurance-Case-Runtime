@@ -41,6 +41,15 @@ from ix_autonomy_assurance_case_runtime.project import (
     ProjectIdentity,
     get_project_identity,
 )
+from ix_autonomy_assurance_case_runtime.safety_gate import (
+    ConditionOperator,
+    RuntimeSafetyGate,
+    RuntimeTelemetry,
+    SafetyGateError,
+    SafetyGateResult,
+    SafetyRule,
+    SafetyRuleEvaluation,
+)
 from ix_autonomy_assurance_case_runtime.scenarios import (
     AcceptanceCriterion,
     AutonomyFunction,
@@ -78,6 +87,7 @@ __all__ = [
     "Assumption",
     "AutonomyDecisionType",
     "AutonomyFunction",
+    "ConditionOperator",
     "ContractDefinition",
     "ContractValueError",
     "Control",
@@ -99,6 +109,12 @@ __all__ = [
     "Requirement",
     "ReviewDisposition",
     "RuntimeAuthorityState",
+    "RuntimeSafetyGate",
+    "RuntimeTelemetry",
+    "SafetyGateError",
+    "SafetyGateResult",
+    "SafetyRule",
+    "SafetyRuleEvaluation",
     "Scenario",
     "ScenarioCatalog",
     "ScenarioCatalogValidationReport",
