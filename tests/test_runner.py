@@ -9,6 +9,7 @@ from ix_autonomy_assurance_case_runtime.contracts import (
     VerificationResult,
 )
 from ix_autonomy_assurance_case_runtime.degradation import (
+    DegradationCategory,
     DegradationEngine,
     build_default_degradation_rules,
 )
@@ -140,7 +141,7 @@ def test_runner_executes_severe_scenario_and_produces_hashed_evidence_bundle() -
     run_input = build_run_input(
         telemetry=RuntimeTelemetry(
             values={
-                "navigation_confidence": 0.92,
+                "navigation_confidence": 0.62,
                 "power_margin_pct": 80.0,
                 "comms_link_active": True,
             },
@@ -327,7 +328,7 @@ def test_runner_preserves_prior_evidence_integrity_as_degradation_input() -> Non
 
     result = runner.run(catalog=catalog, run_input=run_input)
 
-    assert result.degradation_assessment.has_category.__self__ is result.degradation_assessment
+    assert result.degradation_assessment.has_category(DegradationCategory.STALE_EVIDENCE) is True
     assert result.degradation_assessment.worst_level().value == "watch"
     assert result.verification_result is VerificationResult.FAIL
     assert result.evidence_bundle.bundle_id == "BND-RUN-002"
@@ -339,7 +340,7 @@ def test_run_result_evidence_payload_is_json_compatible_and_complete() -> None:
     run_input = build_run_input(
         telemetry=RuntimeTelemetry(
             values={
-                "navigation_confidence": 0.92,
+                "navigation_confidence": 0.62,
                 "power_margin_pct": 80.0,
                 "comms_link_active": True,
             }
