@@ -60,6 +60,12 @@ from ix_autonomy_assurance_case_runtime.project import (
     ProjectIdentity,
     get_project_identity,
 )
+from ix_autonomy_assurance_case_runtime.runner import (
+    ScenarioRunInput,
+    ScenarioRunResult,
+    ScenarioRunner,
+    ScenarioRunnerError,
+)
 from ix_autonomy_assurance_case_runtime.safety_gate import (
     ConditionOperator,
     RuntimeSafetyGate,
@@ -151,6 +157,10 @@ __all__ = [
     "ScenarioCatalog",
     "ScenarioCatalogValidationReport",
     "ScenarioModelError",
+    "ScenarioRunInput",
+    "ScenarioRunResult",
+    "ScenarioRunner",
+    "ScenarioRunnerError",
     "Stressor",
     "TelemetryConflictCheck",
     "TraceEdge",
