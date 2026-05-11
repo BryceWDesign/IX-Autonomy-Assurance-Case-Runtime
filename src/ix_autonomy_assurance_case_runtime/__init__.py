@@ -60,6 +60,13 @@ from ix_autonomy_assurance_case_runtime.project import (
     ProjectIdentity,
     get_project_identity,
 )
+from ix_autonomy_assurance_case_runtime.reporting import (
+    AssuranceReport,
+    AssuranceReportGenerator,
+    ReportGenerationError,
+    ReportSection,
+    ReportSeverity,
+)
 from ix_autonomy_assurance_case_runtime.runner import (
     ScenarioRunInput,
     ScenarioRunResult,
@@ -116,6 +123,8 @@ __all__ = [
     "AssuranceCaseValidationReport",
     "AssuranceClaim",
     "AssuranceModelError",
+    "AssuranceReport",
+    "AssuranceReportGenerator",
     "Assumption",
     "AuthorityController",
     "AuthorityDecisionResult",
@@ -150,6 +159,9 @@ __all__ = [
     "OperatingCondition",
     "OperationalContext",
     "ProjectIdentity",
+    "ReportGenerationError",
+    "ReportSection",
+    "ReportSeverity",
     "Requirement",
     "ReviewActor",
     "ReviewDisposition",
