@@ -15,6 +15,14 @@ from ix_autonomy_assurance_case_runtime.assurance_case import (
     Mitigation,
     VerificationCriterion,
 )
+from ix_autonomy_assurance_case_runtime.authority import (
+    AuthorityController,
+    AuthorityDecisionResult,
+    AuthorityReviewDecision,
+    AuthorityReviewError,
+    AuthorityReviewRequest,
+    ReviewActor,
+)
 from ix_autonomy_assurance_case_runtime.contracts import (
     AssuranceCaseStatus,
     AutonomyDecisionType,
@@ -85,6 +93,11 @@ __all__ = [
     "AssuranceClaim",
     "AssuranceModelError",
     "Assumption",
+    "AuthorityController",
+    "AuthorityDecisionResult",
+    "AuthorityReviewDecision",
+    "AuthorityReviewError",
+    "AuthorityReviewRequest",
     "AutonomyDecisionType",
     "AutonomyFunction",
     "ConditionOperator",
@@ -107,6 +120,7 @@ __all__ = [
     "OperationalContext",
     "ProjectIdentity",
     "Requirement",
+    "ReviewActor",
     "ReviewDisposition",
     "RuntimeAuthorityState",
     "RuntimeSafetyGate",
