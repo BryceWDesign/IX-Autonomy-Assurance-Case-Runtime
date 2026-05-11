@@ -1,0 +1,5 @@
+{
+  "need_id": "MN-NAV-001",
+  "statement": "Autonomous route behavior must remain bounded when navigation confidence degrades.",
+  "operational_driver": "Trusted autonomy test and evaluation for mission assurance."
+}
