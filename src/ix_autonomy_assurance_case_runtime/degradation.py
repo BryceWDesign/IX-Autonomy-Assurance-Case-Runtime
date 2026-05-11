@@ -120,7 +120,9 @@ def _as_number(value: TelemetryValue, *, field_name: str) -> float:
     return float(value)
 
 
-def _threshold_as_scalar(threshold: TelemetryThreshold | None, *, field_name: str) -> TelemetryValue:
+def _threshold_as_scalar(
+    threshold: TelemetryThreshold | None, *, field_name: str
+) -> TelemetryValue:
     if threshold is None:
         raise DegradationRuntimeError(f"{field_name} must not be absent.")
     if isinstance(threshold, tuple):
@@ -246,7 +248,9 @@ class DegradationRule:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "rule_id", _require_text(self.rule_id, "rule_id"))
-        object.__setattr__(self, "telemetry_key", _require_text(self.telemetry_key, "telemetry_key"))
+        object.__setattr__(
+            self, "telemetry_key", _require_text(self.telemetry_key, "telemetry_key")
+        )
         object.__setattr__(self, "rationale", _require_text(self.rationale, "rationale"))
         object.__setattr__(
             self,
@@ -333,9 +337,7 @@ class DegradationRule:
             upper_number = _as_number(self.upper_threshold, field_name="upper_threshold")
             return threshold_number <= observed_number <= upper_number
 
-        raise DegradationRuntimeError(
-            f"Unsupported condition operator {self.operator.value!r}."
-        )
+        raise DegradationRuntimeError(f"Unsupported condition operator {self.operator.value!r}.")
 
 
 @dataclass(frozen=True, slots=True)
@@ -491,9 +493,8 @@ class DegradationEngine:
     conflict_checks: tuple[TelemetryConflictCheck, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
-        identifiers = (
-            tuple(rule.rule_id for rule in self.rules)
-            + tuple(check.check_id for check in self.conflict_checks)
+        identifiers = tuple(rule.rule_id for rule in self.rules) + tuple(
+            check.check_id for check in self.conflict_checks
         )
         if len(identifiers) != len(set(identifiers)):
             raise DegradationRuntimeError(
