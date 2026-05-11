@@ -17,7 +17,6 @@ from ix_autonomy_assurance_case_runtime.safety_gate import RuntimeTelemetry
 from ix_autonomy_assurance_case_runtime.traceability import build_traceability_graph
 from ix_autonomy_assurance_case_runtime.verification import VerificationEngine
 
-
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES = ROOT / "examples"
 SCHEMAS = ROOT / "schemas"
