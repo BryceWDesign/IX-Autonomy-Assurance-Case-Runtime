@@ -150,9 +150,7 @@ def test_ledger_detects_tampered_entry_payload() -> None:
     report = tampered_ledger.validate_chain()
 
     assert report.is_valid is False
-    assert report.errors == (
-        "Ledger entry 'LEDGER-ENTRY-001' hash does not match entry content.",
-    )
+    assert report.errors == ("Ledger entry 'LEDGER-ENTRY-001' hash does not match entry content.",)
 
 
 def test_ledger_detects_broken_previous_hash_link() -> None:
@@ -202,8 +200,7 @@ def test_ledger_detects_broken_previous_hash_link() -> None:
 
     assert report.is_valid is False
     assert (
-        "Ledger entry 'LEDGER-ENTRY-002' previous hash does not match entry "
-        "'LEDGER-ENTRY-001'."
+        "Ledger entry 'LEDGER-ENTRY-002' previous hash does not match entry 'LEDGER-ENTRY-001'."
     ) in report.errors
 
 
@@ -337,9 +334,13 @@ def test_ledger_to_dict_is_machine_readable() -> None:
 
     entries = payload["entries"]
     assert isinstance(entries, list)
-    assert entries[0]["entry_id"] == "LEDGER-ENTRY-001"
-    assert entries[0]["entry_hash"] == ledger.entries[0].entry_hash
-    assert entries[0]["artifact_hash"].startswith("sha256:")
+    entry_payload = entries[0]
+    assert isinstance(entry_payload, dict)
+    artifact_hash = entry_payload["artifact_hash"]
+    assert isinstance(artifact_hash, str)
+    assert entry_payload["entry_id"] == "LEDGER-ENTRY-001"
+    assert entry_payload["entry_hash"] == ledger.entries[0].entry_hash
+    assert artifact_hash.startswith("sha256:")
 
 
 def test_ledger_entry_rejects_unprefixed_hashes() -> None:
