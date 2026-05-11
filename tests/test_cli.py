@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from ix_autonomy_assurance_case_runtime.cli import main
 from ix_autonomy_assurance_case_runtime.evidence import EvidenceBundle, EvidenceRecord
 from ix_autonomy_assurance_case_runtime.ledger import RunLedger
@@ -168,7 +170,9 @@ def build_catalog_payload() -> dict[str, object]:
     }
 
 
-def test_cli_validate_case_outputs_valid_json(tmp_path: Path, capsys) -> None:
+def test_cli_validate_case_outputs_valid_json(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     case_path = tmp_path / "case.json"
     write_json(case_path, build_case_payload())
 
@@ -182,7 +186,9 @@ def test_cli_validate_case_outputs_valid_json(tmp_path: Path, capsys) -> None:
     assert payload["errors"] == []
 
 
-def test_cli_run_scenario_outputs_hashed_evidence_bundle(tmp_path: Path, capsys) -> None:
+def test_cli_run_scenario_outputs_hashed_evidence_bundle(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     catalog_path = tmp_path / "catalog.json"
     telemetry_path = tmp_path / "telemetry.json"
     write_json(catalog_path, build_catalog_payload())
@@ -191,7 +197,7 @@ def test_cli_run_scenario_outputs_hashed_evidence_bundle(tmp_path: Path, capsys)
         {
             "source": "simulated-runtime",
             "values": {
-                "navigation_confidence": 0.92,
+                "navigation_confidence": 0.62,
                 "power_margin_pct": 80.0,
             },
         },
@@ -221,7 +227,9 @@ def test_cli_run_scenario_outputs_hashed_evidence_bundle(tmp_path: Path, capsys)
     assert payload["evidence_bundle"]["bundle_hash"].startswith("sha256:")
 
 
-def test_cli_verify_bundle_accepts_valid_bundle(tmp_path: Path, capsys) -> None:
+def test_cli_verify_bundle_accepts_valid_bundle(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     record = EvidenceRecord(
         evidence_id="EV-001",
         kind="scenario-run",
@@ -247,7 +255,9 @@ def test_cli_verify_bundle_accepts_valid_bundle(tmp_path: Path, capsys) -> None:
     assert payload["bundle_id"] == "BND-001"
 
 
-def test_cli_validate_ledger_accepts_valid_hash_chain(tmp_path: Path, capsys) -> None:
+def test_cli_validate_ledger_accepts_valid_hash_chain(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     record = EvidenceRecord(
         evidence_id="EV-001",
         kind="scenario-run",
@@ -278,7 +288,7 @@ def test_cli_validate_ledger_accepts_valid_hash_chain(tmp_path: Path, capsys) ->
     assert payload["entry_count"] == 1
 
 
-def test_cli_export_report_markdown(tmp_path: Path, capsys) -> None:
+def test_cli_export_report_markdown(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     report_path = tmp_path / "report.json"
     write_json(
         report_path,
@@ -308,7 +318,9 @@ def test_cli_export_report_markdown(tmp_path: Path, capsys) -> None:
     assert "## Executive Summary" in captured.out
 
 
-def test_cli_audit_traceability_reports_connected_path(tmp_path: Path, capsys) -> None:
+def test_cli_audit_traceability_reports_connected_path(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     case_path = tmp_path / "case.json"
     catalog_path = tmp_path / "catalog.json"
     mission_need_path = tmp_path / "mission-need.json"
@@ -363,7 +375,9 @@ def test_cli_audit_traceability_reports_connected_path(tmp_path: Path, capsys) -
     assert payload["edge_count"] > 0
 
 
-def test_cli_returns_error_code_for_invalid_case(tmp_path: Path, capsys) -> None:
+def test_cli_returns_error_code_for_invalid_case(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     case_path = tmp_path / "broken-case.json"
     payload = build_case_payload()
     payload["claims"] = []
@@ -378,7 +392,9 @@ def test_cli_returns_error_code_for_invalid_case(tmp_path: Path, capsys) -> None
     assert "Assurance case must contain at least one claim." in result["errors"]
 
 
-def test_cli_returns_error_code_for_malformed_json(tmp_path: Path, capsys) -> None:
+def test_cli_returns_error_code_for_malformed_json(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     bad_path = tmp_path / "bad.json"
     bad_path.write_text("{not-valid-json", encoding="utf-8")
 
