@@ -17,7 +17,11 @@ from enum import StrEnum
 from ix_autonomy_assurance_case_runtime.assurance_case import AssuranceCase
 from ix_autonomy_assurance_case_runtime.contracts import VerificationResult
 from ix_autonomy_assurance_case_runtime.runner import ScenarioRunResult
-from ix_autonomy_assurance_case_runtime.scenarios import AcceptanceCriterion, Scenario, ScenarioCatalog
+from ix_autonomy_assurance_case_runtime.scenarios import (
+    AcceptanceCriterion,
+    Scenario,
+    ScenarioCatalog,
+)
 from ix_autonomy_assurance_case_runtime.traceability import TraceabilityGraph
 
 
@@ -103,7 +107,9 @@ class RuntimeVerificationSummary:
     def failed_check_ids(self) -> tuple[str, ...]:
         """Return check identifiers with failed results."""
 
-        return tuple(check.check_id for check in self.checks if check.result is VerificationResult.FAIL)
+        return tuple(
+            check.check_id for check in self.checks if check.result is VerificationResult.FAIL
+        )
 
     def follow_up_check_ids(self) -> tuple[str, ...]:
         """Return check identifiers that require follow-up."""
@@ -191,7 +197,8 @@ class VerificationEngine:
         if any(check.result is VerificationResult.FAIL for check in checks):
             return VerificationResult.FAIL
         if any(
-            check.result in {
+            check.result
+            in {
                 VerificationResult.INCONCLUSIVE,
                 VerificationResult.NOT_RUN,
             }
@@ -302,7 +309,8 @@ class VerificationEngine:
                     check_id="scenario-catalog-warnings",
                     result=VerificationResult.INCONCLUSIVE,
                     severity=VerificationIssueSeverity.WARNING,
-                    message="Scenario catalog warnings require review: " + "; ".join(report.warnings),
+                    message="Scenario catalog warnings require review: "
+                    + "; ".join(report.warnings),
                 )
             )
         else:
@@ -366,7 +374,9 @@ class VerificationEngine:
                     result=result,
                     severity=severity,
                     message=message,
-                    evidence_ids=tuple(record.evidence_id for record in run_result.evidence_bundle.records),
+                    evidence_ids=tuple(
+                        record.evidence_id for record in run_result.evidence_bundle.records
+                    ),
                 )
             )
 
@@ -378,7 +388,9 @@ class VerificationEngine:
         scenario_catalog: ScenarioCatalog,
         run_result: ScenarioRunResult,
     ) -> tuple[VerificationCheckResult, ...]:
-        criteria_by_id: dict[str, AcceptanceCriterion] = scenario_catalog.acceptance_criterion_index()
+        criteria_by_id: dict[str, AcceptanceCriterion] = (
+            scenario_catalog.acceptance_criterion_index()
+        )
         referenced_criteria = tuple(
             criteria_by_id[criterion_id]
             for criterion_id in scenario.acceptance_criterion_ids
@@ -397,7 +409,9 @@ class VerificationEngine:
                 ),
             )
 
-        if requires_evidence and any(record.content_hash is None for record in run_result.evidence_bundle.records):
+        if requires_evidence and any(
+            record.content_hash is None for record in run_result.evidence_bundle.records
+        ):
             return (
                 VerificationCheckResult(
                     check_id="required-evidence-present",
@@ -497,7 +511,10 @@ class VerificationEngine:
                 )
             )
 
-        if run_result.operator_review_required and run_result.final_decision.permits_nominal_execution():
+        if (
+            run_result.operator_review_required
+            and run_result.final_decision.permits_nominal_execution()
+        ):
             checks.append(
                 VerificationCheckResult(
                     check_id="operator-review-consistency",
@@ -545,7 +562,8 @@ class VerificationEngine:
                     check_id="evidence-bundle-integrity",
                     result=VerificationResult.INCONCLUSIVE,
                     severity=VerificationIssueSeverity.WARNING,
-                    message="Evidence bundle warnings require review: " + "; ".join(report.warnings),
+                    message="Evidence bundle warnings require review: "
+                    + "; ".join(report.warnings),
                     evidence_ids=record_ids,
                 ),
             )
@@ -605,7 +623,8 @@ class VerificationEngine:
                     check_id="traceability-graph-valid",
                     result=VerificationResult.INCONCLUSIVE,
                     severity=VerificationIssueSeverity.WARNING,
-                    message="Traceability graph warnings require review: " + "; ".join(report.warnings),
+                    message="Traceability graph warnings require review: "
+                    + "; ".join(report.warnings),
                 )
             )
         else:
