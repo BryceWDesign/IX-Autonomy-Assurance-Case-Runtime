@@ -12,7 +12,7 @@ and whether evidence integrity survived validation.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
 
 from ix_autonomy_assurance_case_runtime.assurance_case import AssuranceCase
@@ -122,18 +122,14 @@ class AssuranceReport:
         """Return section titles marked as errors."""
 
         return tuple(
-            section.title
-            for section in self.sections
-            if section.severity is ReportSeverity.ERROR
+            section.title for section in self.sections if section.severity is ReportSeverity.ERROR
         )
 
     def warning_section_titles(self) -> tuple[str, ...]:
         """Return section titles marked as warnings."""
 
         return tuple(
-            section.title
-            for section in self.sections
-            if section.severity is ReportSeverity.WARNING
+            section.title for section in self.sections if section.severity is ReportSeverity.WARNING
         )
 
     def to_dict(self) -> dict[str, object]:
@@ -290,7 +286,8 @@ class AssuranceReportGenerator:
         lines = (
             f"Runtime decision: `{run_result.final_decision.value}`.",
             f"Runtime authority state: `{run_result.final_authority_state.value}`.",
-            f"Expected behavior satisfied: `{str(run_result.expected_behavior_satisfied).lower()}`.",
+            "Expected behavior satisfied: "
+            f"`{str(run_result.expected_behavior_satisfied).lower()}`.",
             f"Operator review required: `{str(run_result.operator_review_required).lower()}`.",
             f"Degraded mode: `{str(run_result.degraded_mode).lower()}`.",
             f"Degradation worst level: `{run_result.degradation_assessment.worst_level().value}`.",
@@ -331,10 +328,13 @@ class AssuranceReportGenerator:
         unsupported_claims = assurance_case.unsupported_claim_ids()
         missing_evidence = _missing_evidence_ids(assurance_case)
 
+        unresolved_text = ", ".join(unresolved_hazards) if unresolved_hazards else "none"
+        unsupported_text = ", ".join(unsupported_claims) if unsupported_claims else "none"
+        missing_text = ", ".join(missing_evidence) if missing_evidence else "none"
         lines = (
-            f"Unresolved severe hazards: `{', '.join(unresolved_hazards) if unresolved_hazards else 'none'}`.",
-            f"Unsupported claims: `{', '.join(unsupported_claims) if unsupported_claims else 'none'}`.",
-            f"Missing evidence references: `{', '.join(missing_evidence) if missing_evidence else 'none'}`.",
+            f"Unresolved severe hazards: `{unresolved_text}`.",
+            f"Unsupported claims: `{unsupported_text}`.",
+            f"Missing evidence references: `{missing_text}`.",
         )
 
         severity = ReportSeverity.INFO
@@ -362,9 +362,11 @@ class AssuranceReportGenerator:
             if claim.verification_result.requires_follow_up() or not claim.has_support_path()
         )
 
+        accepted_text = ", ".join(accepted_claim_ids) if accepted_claim_ids else "none"
+        blocked_text = ", ".join(blocked_claim_ids) if blocked_claim_ids else "none"
         lines = (
-            f"Accepted claims: `{', '.join(accepted_claim_ids) if accepted_claim_ids else 'none'}`.",
-            f"Blocked or follow-up claims: `{', '.join(blocked_claim_ids) if blocked_claim_ids else 'none'}`.",
+            f"Accepted claims: `{accepted_text}`.",
+            f"Blocked or follow-up claims: `{blocked_text}`.",
         )
 
         return ReportSection(
@@ -391,9 +393,11 @@ class AssuranceReportGenerator:
             )
         )
 
+        criteria_text = ", ".join(criteria_ids) if criteria_ids else "none"
+        failed_text = ", ".join(failed_criteria) if failed_criteria else "none"
         lines = (
-            f"Acceptance criteria in catalog: `{', '.join(criteria_ids) if criteria_ids else 'none'}`.",
-            f"Failed acceptance criteria: `{', '.join(failed_criteria) if failed_criteria else 'none'}`.",
+            f"Acceptance criteria in catalog: `{criteria_text}`.",
+            f"Failed acceptance criteria: `{failed_text}`.",
         )
 
         return ReportSection(
@@ -407,12 +411,16 @@ class AssuranceReportGenerator:
         integrity_report = run_result.evidence_bundle.validate_integrity()
         record_ids = tuple(record.evidence_id for record in run_result.evidence_bundle.records)
 
+        bundle_hash_present = str(run_result.evidence_bundle.bundle_hash is not None).lower()
+        record_text = ", ".join(record_ids) if record_ids else "none"
+        error_text = "; ".join(integrity_report.errors) if integrity_report.errors else "none"
+        warning_text = "; ".join(integrity_report.warnings) if integrity_report.warnings else "none"
         lines = (
             f"Evidence bundle: `{run_result.evidence_bundle.bundle_id}`.",
-            f"Bundle hash present: `{str(run_result.evidence_bundle.bundle_hash is not None).lower()}`.",
-            f"Evidence records: `{', '.join(record_ids) if record_ids else 'none'}`.",
-            f"Integrity errors: `{'; '.join(integrity_report.errors) if integrity_report.errors else 'none'}`.",
-            f"Integrity warnings: `{'; '.join(integrity_report.warnings) if integrity_report.warnings else 'none'}`.",
+            f"Bundle hash present: `{bundle_hash_present}`.",
+            f"Evidence records: `{record_text}`.",
+            f"Integrity errors: `{error_text}`.",
+            f"Integrity warnings: `{warning_text}`.",
         )
 
         severity = ReportSeverity.INFO
