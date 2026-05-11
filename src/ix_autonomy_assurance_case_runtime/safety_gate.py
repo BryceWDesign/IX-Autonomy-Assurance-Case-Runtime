@@ -22,7 +22,11 @@ from ix_autonomy_assurance_case_runtime.contracts import (
     AutonomyDecisionType,
     RuntimeAuthorityState,
 )
-from ix_autonomy_assurance_case_runtime.scenarios import Scenario, ScenarioCatalog
+from ix_autonomy_assurance_case_runtime.scenarios import (
+    ExpectedSafeBehavior,
+    Scenario,
+    ScenarioCatalog,
+)
 
 TelemetryValue: TypeAlias = str | int | float | bool | None
 TelemetryThreshold: TypeAlias = TelemetryValue | tuple[TelemetryValue, ...]
@@ -387,7 +391,7 @@ class RuntimeSafetyGate:
         *,
         scenario: Scenario,
         catalog: ScenarioCatalog,
-    ) -> object:
+    ) -> ExpectedSafeBehavior:
         behaviors = catalog.expected_behavior_index()
         if scenario.expected_behavior_id not in behaviors:
             raise SafetyGateError(
