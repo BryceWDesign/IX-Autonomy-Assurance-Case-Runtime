@@ -7,6 +7,7 @@ from ix_autonomy_assurance_case_runtime.evidence import (
     EvidenceBundle,
     EvidenceRecord,
     EvidenceRuntimeError,
+    JSONValue,
     canonical_json_bytes,
     sha256_canonical_json,
     sha256_hexdigest,
@@ -41,8 +42,8 @@ def build_bundle() -> EvidenceBundle:
 
 
 def test_canonical_json_bytes_are_deterministic_for_key_order() -> None:
-    left = {"b": 2, "a": {"d": 4, "c": 3}}
-    right = {"a": {"c": 3, "d": 4}, "b": 2}
+    left: dict[str, JSONValue] = {"b": 2, "a": {"d": 4, "c": 3}}
+    right: dict[str, JSONValue] = {"a": {"c": 3, "d": 4}, "b": 2}
 
     assert canonical_json_bytes(left) == canonical_json_bytes(right)
     assert canonical_json_bytes(left) == b'{"a":{"c":3,"d":4},"b":2}'
@@ -50,8 +51,7 @@ def test_canonical_json_bytes_are_deterministic_for_key_order() -> None:
 
 def test_sha256_helpers_return_prefixed_digest() -> None:
     assert sha256_hexdigest(b"abc") == (
-        "sha256:ba7816bf8f01cfea414140de5dae2223"
-        "b00361a396177a9cb410ff61f20015ad"
+        "sha256:ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
     )
     assert sha256_canonical_json({"message": "abc"}).startswith("sha256:")
 
@@ -159,10 +159,7 @@ def test_evidence_bundle_integrity_validation_fails_on_record_hash_mismatch() ->
     report = tampered_bundle.validate_integrity()
 
     assert report.is_valid is False
-    assert (
-        "Evidence record 'EV-BAD' content hash does not match record content."
-        in report.errors
-    )
+    assert "Evidence record 'EV-BAD' content hash does not match record content." in report.errors
     assert "Evidence bundle 'BND-BAD' hash does not match bundle content." in report.errors
 
 
@@ -203,9 +200,7 @@ def test_evidence_bundle_integrity_validation_warns_on_stale_status() -> None:
     report = bundle.validate_integrity()
 
     assert report.is_valid is True
-    assert report.warnings == (
-        "Evidence record 'EV-STALE' has non-usable status 'stale'.",
-    )
+    assert report.warnings == ("Evidence record 'EV-STALE' has non-usable status 'stale'.",)
 
 
 def test_evidence_bundle_record_index_uses_evidence_id() -> None:
@@ -222,7 +217,9 @@ def test_evidence_bundle_to_dict_contains_computed_hash_when_requested() -> None
     assert payload["bundle_hash"] == bundle.calculate_bundle_hash()
     records = payload["records"]
     assert isinstance(records, list)
-    assert records[0]["content_hash"] == build_record().calculate_content_hash()
+    record_payload = records[0]
+    assert isinstance(record_payload, dict)
+    assert record_payload["content_hash"] == build_record().calculate_content_hash()
 
 
 def test_evidence_bundle_rejects_duplicate_record_identifiers() -> None:
