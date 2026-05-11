@@ -1,0 +1,12 @@
+IX-Autonomy-Assurance-Case-Runtime
+Copyright 2026 Bryce Lovell
+
+IX-Autonomy-Assurance-Case-Runtime is an original project by Bryce Lovell.
+
+This project provides a reference implementation for a Trusted Autonomy T&E
+assurance-case runtime. It is not an official government system, certification
+authority, accreditation product, or replacement for formal test and evaluation,
+safety review, cybersecurity authorization, operational test, legal review, or
+human command authority.
+
+Licensed under the Apache License, Version 2.0.
