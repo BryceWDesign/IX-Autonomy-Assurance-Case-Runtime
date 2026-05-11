@@ -61,9 +61,7 @@ def build_catalog(*, severe: bool = True, restrictive_behavior: bool = True) -> 
         behavior_id="BEH-001",
         description="Expected behavior for navigation confidence loss.",
         required_decision=(
-            AutonomyDecisionType.SAFE_HOLD
-            if restrictive_behavior
-            else AutonomyDecisionType.ALLOW
+            AutonomyDecisionType.SAFE_HOLD if restrictive_behavior else AutonomyDecisionType.ALLOW
         ),
         required_authority_state=(
             RuntimeAuthorityState.EMERGENCY_SAFE_HOLD
@@ -145,7 +143,7 @@ def test_severe_scenario_expected_behavior_forces_safe_hold_without_rules() -> N
     gate = RuntimeSafetyGate()
     telemetry = RuntimeTelemetry(
         values={
-            "navigation_confidence": 0.82,
+            "navigation_confidence": 0.62,
             "boundary_distance_ft": 250.0,
             "power_margin_pct": 80.0,
         },
@@ -310,7 +308,9 @@ def test_in_and_not_in_operators_match_expected_values() -> None:
     )
 
     assert in_rule.evaluate(RuntimeTelemetry(values={"autonomy_mode": "degraded"})).matched is True
-    assert not_in_rule.evaluate(RuntimeTelemetry(values={"autonomy_mode": "unknown"})).matched is True
+    assert (
+        not_in_rule.evaluate(RuntimeTelemetry(values={"autonomy_mode": "unknown"})).matched is True
+    )
 
 
 def test_exists_operator_matches_present_non_null_telemetry() -> None:
