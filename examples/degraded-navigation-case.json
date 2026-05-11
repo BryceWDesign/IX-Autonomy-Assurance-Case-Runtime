@@ -1,0 +1,67 @@
+{
+  "case_id": "CASE-NAV-001",
+  "title": "Degraded Navigation Assurance Case",
+  "system_name": "Reference Autonomy Stack",
+  "mission_context": "Autonomous route execution under degraded navigation confidence.",
+  "status": "ready_for_review",
+  "claims": [
+    {
+      "claim_id": "CLM-NAV-001",
+      "statement": "The autonomy runtime remains bounded under degraded navigation confidence.",
+      "argument": "A runtime safety gate detects active navigation-confidence degradation and forces safe-hold with emergency authority state before nominal route execution continues.",
+      "evidence_ids": ["EV-NAV-001"],
+      "verification_criterion_ids": ["VC-NAV-001"],
+      "verification_result": "pass"
+    }
+  ],
+  "hazards": [
+    {
+      "hazard_id": "HZ-NAV-001",
+      "title": "Navigation confidence loss",
+      "description": "Autonomy may continue nominal route execution after navigation confidence falls below the mission threshold.",
+      "severity": "critical",
+      "control_ids": ["CTRL-NAV-001"],
+      "mitigation_ids": ["MIT-NAV-001"],
+      "evidence_ids": ["EV-NAV-001"]
+    }
+  ],
+  "controls": [
+    {
+      "control_id": "CTRL-NAV-001",
+      "name": "Navigation confidence safety gate",
+      "description": "Restricts nominal autonomy when navigation-confidence telemetry satisfies the degraded-navigation trigger condition.",
+      "mitigates_hazard_ids": ["HZ-NAV-001"],
+      "evidence_ids": ["EV-NAV-001"]
+    }
+  ],
+  "mitigations": [
+    {
+      "mitigation_id": "MIT-NAV-001",
+      "hazard_id": "HZ-NAV-001",
+      "control_id": "CTRL-NAV-001",
+      "description": "Force safe-hold and require emergency authority state while navigation confidence is degraded.",
+      "evidence_ids": ["EV-NAV-001"]
+    }
+  ],
+  "assumptions": [],
+  "evidence": [
+    {
+      "evidence_id": "EV-NAV-001",
+      "description": "Acceptance run evidence showing safe-hold under active degraded-navigation telemetry.",
+      "source": "run-bundles/RUN-ACCEPTANCE-001.json",
+      "status": "accepted",
+      "supports": ["CLM-NAV-001", "VC-NAV-001", "CTRL-NAV-001", "MIT-NAV-001", "HZ-NAV-001"],
+      "content_hash": "sha256:acceptance-navigation-runtime-evidence"
+    }
+  ],
+  "verification_criteria": [
+    {
+      "criterion_id": "VC-NAV-001",
+      "statement": "Safe-hold is emitted when navigation confidence is below the mission threshold.",
+      "verification_method": "Runtime scenario execution with deterministic evidence bundle hashing.",
+      "expected_result": "safe_hold with emergency_safe_hold authority state",
+      "result": "pass",
+      "evidence_ids": ["EV-NAV-001"]
+    }
+  ]
+}
