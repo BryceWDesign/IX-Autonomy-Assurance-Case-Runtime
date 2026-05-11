@@ -100,6 +100,13 @@ from ix_autonomy_assurance_case_runtime.traceability import (
     TraceabilityValidationReport,
     build_traceability_graph,
 )
+from ix_autonomy_assurance_case_runtime.verification import (
+    RuntimeVerificationSummary,
+    VerificationCheckResult,
+    VerificationEngine,
+    VerificationEngineError,
+    VerificationIssueSeverity,
+)
 
 __all__ = [
     "PROJECT_NAME",
@@ -149,6 +156,7 @@ __all__ = [
     "RuntimeAuthorityState",
     "RuntimeSafetyGate",
     "RuntimeTelemetry",
+    "RuntimeVerificationSummary",
     "SafetyGateError",
     "SafetyGateResult",
     "SafetyRule",
@@ -170,7 +178,11 @@ __all__ = [
     "TraceabilityError",
     "TraceabilityGraph",
     "TraceabilityValidationReport",
+    "VerificationCheckResult",
     "VerificationCriterion",
+    "VerificationEngine",
+    "VerificationEngineError",
+    "VerificationIssueSeverity",
     "VerificationResult",
     "__version__",
     "build_contract_catalog",
