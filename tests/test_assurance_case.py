@@ -126,9 +126,7 @@ def test_assurance_case_reports_missing_references() -> None:
     report = case.validate_references()
 
     assert report.is_valid is False
-    assert report.errors == (
-        "Artifact 'CLM-404' references missing evidence 'EV-MISSING'.",
-    )
+    assert report.errors == ("Artifact 'CLM-404' references missing evidence 'EV-MISSING'.",)
 
 
 def test_ready_for_review_case_with_errors_is_blocked() -> None:
