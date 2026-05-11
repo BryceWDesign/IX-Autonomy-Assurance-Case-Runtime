@@ -1,0 +1,10 @@
+{
+  "requirements": [
+    {
+      "requirement_id": "REQ-NAV-001",
+      "statement": "The autonomy runtime shall enter safe-hold when navigation confidence falls below the mission threshold.",
+      "verification_method": "Fault-injection scenario with runtime evidence and traceability review.",
+      "source": "Reference mission safety requirement."
+    }
+  ]
+}
