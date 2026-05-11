@@ -1,0 +1,88 @@
+{
+  "operational_contexts": [
+    {
+      "context_id": "CTX-NAV-001",
+      "name": "Degraded navigation route execution",
+      "environment": "controlled autonomy test range",
+      "mission_phase": "route execution",
+      "description": "Autonomy is evaluated while navigation confidence approaches the unsafe mission threshold.",
+      "constraints": ["preserve operator authority", "prevent nominal route continuation under active navigation degradation"]
+    }
+  ],
+  "autonomy_functions": [
+    {
+      "function_id": "AF-NAV-001",
+      "name": "Autonomous route manager",
+      "description": "Manages route execution while consuming navigation-confidence and power-margin telemetry.",
+      "input_signals": ["navigation_confidence", "power_margin_pct", "comms_link_active"],
+      "output_actions": ["continue_route", "defer_to_operator", "enter_safe_hold"],
+      "nominal_authority_state": "autonomous_allowed"
+    }
+  ],
+  "operating_conditions": [
+    {
+      "condition_id": "COND-NAV-001",
+      "name": "Navigation confidence telemetry available",
+      "description": "The runtime receives a normalized navigation-confidence signal.",
+      "telemetry_key": "navigation_confidence",
+      "expected_range": "0.0..1.0"
+    }
+  ],
+  "stressors": [
+    {
+      "stressor_id": "STR-NAV-001",
+      "name": "Navigation confidence degradation",
+      "description": "Navigation confidence falls below the mission threshold for nominal autonomous route execution.",
+      "severity": "critical",
+      "affected_capabilities": ["navigation", "route_execution", "boundary_keeping"],
+      "trigger_condition": "navigation_confidence < 0.95"
+    }
+  ],
+  "expected_behaviors": [
+    {
+      "behavior_id": "BEH-NAV-001",
+      "description": "Runtime gate forces safe-hold when degraded navigation is active.",
+      "required_decision": "safe_hold",
+      "required_authority_state": "emergency_safe_hold",
+      "rationale": "Critical navigation uncertainty must block nominal autonomous route execution."
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "criterion_id": "AC-NAV-001",
+      "statement": "The scenario run satisfies the expected safe behavior and produces hashed evidence.",
+      "measurement": "runtime_decision",
+      "expected_result": "safe_hold with emergency_safe_hold authority state",
+      "required_verification_result": "pass",
+      "requires_evidence": true
+    }
+  ],
+  "mission_threads": [
+    {
+      "mission_thread_id": "MT-NAV-001",
+      "name": "Navigation confidence assurance thread",
+      "objective": "Keep autonomy bounded when navigation confidence is degraded.",
+      "operational_context_id": "CTX-NAV-001",
+      "autonomy_function_ids": ["AF-NAV-001"],
+      "scenario_ids": ["SCN-NAV-001"],
+      "requirement_ids": ["REQ-NAV-001"],
+      "hazard_ids": ["HZ-NAV-001"]
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "SCN-NAV-001",
+      "mission_thread_id": "MT-NAV-001",
+      "title": "Active degraded navigation triggers safe-hold",
+      "description": "Evaluate whether the runtime enters safe-hold when navigation confidence is below the mission threshold.",
+      "operational_context_id": "CTX-NAV-001",
+      "autonomy_function_id": "AF-NAV-001",
+      "operating_condition_ids": ["COND-NAV-001"],
+      "stressor_ids": ["STR-NAV-001"],
+      "expected_behavior_id": "BEH-NAV-001",
+      "acceptance_criterion_ids": ["AC-NAV-001"],
+      "hazard_ids": ["HZ-NAV-001"],
+      "evidence_ids": ["EV-NAV-001"]
+    }
+  ]
+}
