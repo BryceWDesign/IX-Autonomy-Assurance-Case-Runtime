@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from ix_autonomy_assurance_case_runtime._version import __version__
 from ix_autonomy_assurance_case_runtime.assurance_case import (
+    Assumption,
     AssuranceCase,
     AssuranceCaseValidationReport,
     AssuranceClaim,
     AssuranceModelError,
-    Assumption,
     Control,
     EvidenceLink,
     Hazard,
@@ -76,9 +76,9 @@ from ix_autonomy_assurance_case_runtime.reporting import (
 )
 from ix_autonomy_assurance_case_runtime.runner import (
     ScenarioRunInput,
-    ScenarioRunResult,
     ScenarioRunner,
     ScenarioRunnerError,
+    ScenarioRunResult,
 )
 from ix_autonomy_assurance_case_runtime.safety_gate import (
     ConditionOperator,
@@ -105,13 +105,13 @@ from ix_autonomy_assurance_case_runtime.scenarios import (
 from ix_autonomy_assurance_case_runtime.traceability import (
     MissionNeed,
     Requirement,
+    TraceabilityError,
+    TraceabilityGraph,
+    TraceabilityValidationReport,
     TraceEdge,
     TraceEdgeType,
     TraceNode,
     TraceNodeType,
-    TraceabilityError,
-    TraceabilityGraph,
-    TraceabilityValidationReport,
     build_traceability_graph,
 )
 from ix_autonomy_assurance_case_runtime.verification import (
