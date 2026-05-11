@@ -1,0 +1,360 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/ix-autonomy-assurance-case-runtime/assurance-case.schema.json",
+  "title": "IX Autonomy Assurance Case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "title",
+    "system_name",
+    "mission_context",
+    "status",
+    "claims",
+    "hazards",
+    "controls",
+    "mitigations",
+    "assumptions",
+    "evidence",
+    "verification_criteria"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "system_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mission_context": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "ready_for_review",
+        "accepted",
+        "rejected",
+        "superseded"
+      ]
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/claim"
+      }
+    },
+    "hazards": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/hazard"
+      }
+    },
+    "controls": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/control"
+      }
+    },
+    "mitigations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/mitigation"
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/assumption"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence_link"
+      }
+    },
+    "verification_criteria": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/verification_criterion"
+      }
+    }
+  },
+  "$defs": {
+    "string_array": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "verification_result": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail",
+        "inconclusive",
+        "not_run"
+      ]
+    },
+    "evidence_status": {
+      "type": "string",
+      "enum": [
+        "missing",
+        "provided",
+        "accepted",
+        "stale",
+        "invalid"
+      ]
+    },
+    "hazard_severity": {
+      "type": "string",
+      "enum": [
+        "negligible",
+        "minor",
+        "major",
+        "critical",
+        "catastrophic"
+      ]
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "statement",
+        "argument"
+      ],
+      "properties": {
+        "claim_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "argument": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subclaim_ids": {
+          "$ref": "#/$defs/string_array"
+        },
+        "evidence_ids": {
+          "$ref": "#/$defs/string_array"
+        },
+        "assumption_ids": {
+          "$ref": "#/$defs/string_array"
+        },
+        "verification_criterion_ids": {
+          "$ref": "#/$defs/string_array"
+        },
+        "verification_result": {
+          "$ref": "#/$defs/verification_result"
+        }
+      }
+    },
+    "hazard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hazard_id",
+        "title",
+        "description",
+        "severity"
+      ],
+      "properties": {
+        "hazard_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "severity": {
+          "$ref": "#/$defs/hazard_severity"
+        },
+        "control_ids": {
+          "$ref": "#/$defs/string_array"
+        },
+        "mitigation_ids": {
+          "$ref": "#/$defs/string_array"
+        },
+        "evidence_ids": {
+          "$ref": "#/$defs/string_array"
+        }
+      }
+    },
+    "control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "control_id",
+        "name",
+        "description",
+        "mitigates_hazard_ids"
+      ],
+      "properties": {
+        "control_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mitigates_hazard_ids": {
+          "$ref": "#/$defs/string_array"
+        },
+        "evidence_ids": {
+          "$ref": "#/$defs/string_array"
+        }
+      }
+    },
+    "mitigation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mitigation_id",
+        "hazard_id",
+        "control_id",
+        "description"
+      ],
+      "properties": {
+        "mitigation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hazard_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "control_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_ids": {
+          "$ref": "#/$defs/string_array"
+        }
+      }
+    },
+    "assumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assumption_id",
+        "statement",
+        "rationale"
+      ],
+      "properties": {
+        "assumption_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_ids": {
+          "$ref": "#/$defs/string_array"
+        }
+      }
+    },
+    "evidence_link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "description",
+        "source"
+      ],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "$ref": "#/$defs/evidence_status"
+        },
+        "supports": {
+          "$ref": "#/$defs/string_array"
+        },
+        "content_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "verification_criterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "criterion_id",
+        "statement",
+        "verification_method",
+        "expected_result"
+      ],
+      "properties": {
+        "criterion_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verification_method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_result": {
+          "type": "string",
+          "minLength": 1
+        },
+        "result": {
+          "$ref": "#/$defs/verification_result"
+        },
+        "evidence_ids": {
+          "$ref": "#/$defs/string_array"
+        }
+      }
+    }
+  }
+}
