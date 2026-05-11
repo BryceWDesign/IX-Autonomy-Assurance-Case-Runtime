@@ -13,6 +13,7 @@ reference validation.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 
 from ix_autonomy_assurance_case_runtime.contracts import (
@@ -273,11 +274,7 @@ class AssuranceClaim:
     def has_support_path(self) -> bool:
         """Return whether the claim has evidence, subclaims, or verification criteria."""
 
-        return bool(
-            self.evidence_ids
-            or self.subclaim_ids
-            or self.verification_criterion_ids
-        )
+        return bool(self.evidence_ids or self.subclaim_ids or self.verification_criterion_ids)
 
 
 @dataclass(frozen=True, slots=True)
@@ -396,7 +393,9 @@ class AssuranceCase:
                 warnings.append(f"Claim {claim.claim_id!r} has no support path.")
 
         for hazard in self.hazards:
-            self._require_existing(hazard.control_ids, controls, hazard.hazard_id, "control", errors)
+            self._require_existing(
+                hazard.control_ids, controls, hazard.hazard_id, "control", errors
+            )
             self._require_existing(
                 hazard.mitigation_ids,
                 mitigations,
@@ -404,7 +403,9 @@ class AssuranceCase:
                 "mitigation",
                 errors,
             )
-            self._require_existing(hazard.evidence_ids, evidence, hazard.hazard_id, "evidence", errors)
+            self._require_existing(
+                hazard.evidence_ids, evidence, hazard.hazard_id, "evidence", errors
+            )
 
             if hazard.requires_control() and not hazard.has_control_path():
                 errors.append(
@@ -420,10 +421,14 @@ class AssuranceCase:
                 "hazard",
                 errors,
             )
-            self._require_existing(control.evidence_ids, evidence, control.control_id, "evidence", errors)
+            self._require_existing(
+                control.evidence_ids, evidence, control.control_id, "evidence", errors
+            )
 
         for mitigation in self.mitigations:
-            self._require_existing((mitigation.hazard_id,), hazards, mitigation.mitigation_id, "hazard", errors)
+            self._require_existing(
+                (mitigation.hazard_id,), hazards, mitigation.mitigation_id, "hazard", errors
+            )
             self._require_existing(
                 (mitigation.control_id,),
                 controls,
@@ -504,7 +509,9 @@ class AssuranceCase:
             + tuple(item.evidence_id for item in self.evidence)
             + tuple(criterion.criterion_id for criterion in self.verification_criteria)
         )
-        duplicates = sorted({artifact_id for artifact_id in artifact_ids if artifact_ids.count(artifact_id) > 1})
+        duplicates = sorted(
+            {artifact_id for artifact_id in artifact_ids if artifact_ids.count(artifact_id) > 1}
+        )
 
         for duplicate in duplicates:
             errors.append(f"Artifact identifier {duplicate!r} is duplicated.")
@@ -512,7 +519,7 @@ class AssuranceCase:
     @staticmethod
     def _require_existing(
         ids: tuple[str, ...],
-        index: dict[str, object],
+        index: Mapping[str, object],
         owner_id: str,
         reference_name: str,
         errors: list[str],
@@ -520,6 +527,5 @@ class AssuranceCase:
         for reference_id in ids:
             if reference_id not in index:
                 errors.append(
-                    f"Artifact {owner_id!r} references missing {reference_name} "
-                    f"{reference_id!r}."
+                    f"Artifact {owner_id!r} references missing {reference_name} {reference_id!r}."
                 )
