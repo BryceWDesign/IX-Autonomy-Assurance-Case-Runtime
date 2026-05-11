@@ -27,6 +27,15 @@ from ix_autonomy_assurance_case_runtime.contracts import (
     VerificationResult,
     build_contract_catalog,
 )
+from ix_autonomy_assurance_case_runtime.evidence import (
+    EvidenceBundle,
+    EvidenceBundleValidationReport,
+    EvidenceRecord,
+    EvidenceRuntimeError,
+    canonical_json_bytes,
+    sha256_canonical_json,
+    sha256_hexdigest,
+)
 from ix_autonomy_assurance_case_runtime.project import (
     PROJECT_NAME,
     ProjectIdentity,
@@ -60,7 +69,11 @@ __all__ = [
     "ContractDefinition",
     "ContractValueError",
     "Control",
+    "EvidenceBundle",
+    "EvidenceBundleValidationReport",
     "EvidenceLink",
+    "EvidenceRecord",
+    "EvidenceRuntimeError",
     "EvidenceStatus",
     "ExpectedSafeBehavior",
     "Hazard",
@@ -81,5 +94,8 @@ __all__ = [
     "VerificationResult",
     "__version__",
     "build_contract_catalog",
+    "canonical_json_bytes",
     "get_project_identity",
+    "sha256_canonical_json",
+    "sha256_hexdigest",
 ]
