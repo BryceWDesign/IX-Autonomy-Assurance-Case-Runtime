@@ -169,12 +169,8 @@ class ScenarioRunResult:
                 "recommended_authority_state": (
                     self.degradation_assessment.recommended_authority_state().value
                 ),
-                "recommended_decision": (
-                    self.degradation_assessment.recommended_decision().value
-                ),
-                "signal_ids": [
-                    signal.signal_id for signal in self.degradation_assessment.signals
-                ],
+                "recommended_decision": (self.degradation_assessment.recommended_decision().value),
+                "signal_ids": [signal.signal_id for signal in self.degradation_assessment.signals],
                 "worst_level": self.degradation_assessment.worst_level().value,
             },
             "expected_behavior_satisfied": self.expected_behavior_satisfied,
@@ -251,9 +247,7 @@ class ScenarioRunner:
             expected_behavior=expected_behavior,
         )
         verification_result = (
-            VerificationResult.PASS
-            if expected_behavior_satisfied
-            else VerificationResult.FAIL
+            VerificationResult.PASS if expected_behavior_satisfied else VerificationResult.FAIL
         )
         operator_review_required = (
             safety_gate_result.operator_review_required
@@ -357,13 +351,11 @@ class ScenarioRunner:
         final_authority_state: RuntimeAuthorityState,
         expected_behavior: ExpectedSafeBehavior,
     ) -> bool:
-        decision_satisfies = (
-            _decision_rank(final_decision)
-            >= _decision_rank(expected_behavior.required_decision)
+        decision_satisfies = _decision_rank(final_decision) >= _decision_rank(
+            expected_behavior.required_decision
         )
-        authority_satisfies = (
-            _authority_rank(final_authority_state)
-            >= _authority_rank(expected_behavior.required_authority_state)
+        authority_satisfies = _authority_rank(final_authority_state) >= _authority_rank(
+            expected_behavior.required_authority_state
         )
         return decision_satisfies and authority_satisfies
 
