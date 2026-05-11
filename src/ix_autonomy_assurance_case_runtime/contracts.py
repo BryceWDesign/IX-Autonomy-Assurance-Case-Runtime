@@ -217,8 +217,7 @@ class ContractDefinition:
             raise ContractValueError(f"Contract {self.name!r} must define allowed values.")
         if self.default_value not in self.allowed_values:
             message = (
-                f"Default value {self.default_value!r} is not allowed for contract "
-                f"{self.name!r}."
+                f"Default value {self.default_value!r} is not allowed for contract {self.name!r}."
             )
             raise ContractValueError(message)
 
