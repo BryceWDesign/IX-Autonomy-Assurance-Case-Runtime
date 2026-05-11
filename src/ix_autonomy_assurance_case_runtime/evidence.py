@@ -43,7 +43,7 @@ def _normalize_tags(values: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(sorted(normalized))
 
 
-def _normalize_json_value(value: JSONValue) -> JSONValue:
+def _normalize_json_value(value: object) -> JSONValue:
     if value is None:
         return None
     if isinstance(value, bool):
@@ -74,7 +74,16 @@ def _normalize_json_object(value: dict[str, JSONValue]) -> dict[str, JSONValue]:
     return normalized_value
 
 
-def canonical_json_bytes(value: JSONValue) -> bytes:
+def _normalize_evidence_status(value: EvidenceStatus | str) -> EvidenceStatus:
+    if isinstance(value, EvidenceStatus):
+        return value
+    try:
+        return EvidenceStatus.from_value(value)
+    except ValueError as exc:
+        raise EvidenceRuntimeError(str(exc)) from exc
+
+
+def canonical_json_bytes(value: object) -> bytes:
     """Return deterministic UTF-8 JSON bytes for a supported JSON value."""
 
     normalized_value = _normalize_json_value(value)
@@ -93,7 +102,7 @@ def sha256_hexdigest(data: bytes) -> str:
     return f"sha256:{hashlib.sha256(data).hexdigest()}"
 
 
-def sha256_canonical_json(value: JSONValue) -> str:
+def sha256_canonical_json(value: object) -> str:
     """Return a prefixed SHA-256 digest for canonical JSON."""
 
     return sha256_hexdigest(canonical_json_bytes(value))
@@ -107,7 +116,7 @@ class EvidenceRecord:
     kind: str
     source: str
     payload: dict[str, JSONValue] = field(default_factory=_empty_payload)
-    status: EvidenceStatus = EvidenceStatus.PROVIDED
+    status: EvidenceStatus | str = EvidenceStatus.PROVIDED
     created_by: str = "ix-assurance-runtime"
     tags: tuple[str, ...] = field(default_factory=tuple)
     content_hash: str | None = None
@@ -117,6 +126,7 @@ class EvidenceRecord:
         object.__setattr__(self, "kind", _require_text(self.kind, "kind"))
         object.__setattr__(self, "source", _require_text(self.source, "source"))
         object.__setattr__(self, "payload", _normalize_json_object(self.payload))
+        object.__setattr__(self, "status", _normalize_evidence_status(self.status))
         object.__setattr__(self, "created_by", _require_text(self.created_by, "created_by"))
         object.__setattr__(self, "tags", _normalize_tags(self.tags))
 
@@ -136,7 +146,7 @@ class EvidenceRecord:
             "kind": self.kind,
             "payload": self.payload,
             "source": self.source,
-            "status": self.status.value,
+            "status": _normalize_evidence_status(self.status).value,
             "tags": list(self.tags),
         }
 
@@ -178,7 +188,7 @@ class EvidenceRecord:
             "kind": self.kind,
             "payload": self.payload,
             "source": self.source,
-            "status": self.status.value,
+            "status": _normalize_evidence_status(self.status).value,
             "tags": list(self.tags),
         }
 
@@ -299,20 +309,19 @@ class EvidenceBundle:
                     "record content."
                 )
 
-            if record.status is EvidenceStatus.INVALID:
+            record_status = _normalize_evidence_status(record.status)
+            if record_status is EvidenceStatus.INVALID:
                 errors.append(f"Evidence record {record.evidence_id!r} is marked invalid.")
-            elif not record.status.is_usable():
+            elif not record_status.is_usable():
                 warnings.append(
                     f"Evidence record {record.evidence_id!r} has non-usable status "
-                    f"{record.status.value!r}."
+                    f"{record_status.value!r}."
                 )
 
         if self.bundle_hash is None:
             warnings.append(f"Evidence bundle {self.bundle_id!r} has no bundle hash.")
         elif not self.has_valid_bundle_hash():
-            errors.append(
-                f"Evidence bundle {self.bundle_id!r} hash does not match bundle content."
-            )
+            errors.append(f"Evidence bundle {self.bundle_id!r} hash does not match bundle content.")
 
         return EvidenceBundleValidationReport(
             errors=tuple(errors),
