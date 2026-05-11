@@ -218,11 +218,12 @@ class AuthorityReviewDecision:
                 "conditions are required for approved_with_conditions reviews."
             )
 
-        if not self.disposition.allows_acceptance():
-            if self.approved_decision is not None or self.approved_authority_state is not None:
-                raise AuthorityReviewError(
-                    "non-accepting reviews must not provide approved authority outcomes."
-                )
+        if not self.disposition.allows_acceptance() and (
+            self.approved_decision is not None or self.approved_authority_state is not None
+        ):
+            raise AuthorityReviewError(
+                "non-accepting reviews must not provide approved authority outcomes."
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -327,7 +328,9 @@ class AuthorityController:
                 evidence_ids=decision.evidence_ids,
             )
 
-        raise AuthorityReviewError(f"Unsupported review disposition {decision.disposition.value!r}.")
+        raise AuthorityReviewError(
+            f"Unsupported review disposition {decision.disposition.value!r}."
+        )
 
     def _apply_accepting_decision(
         self,
@@ -339,7 +342,9 @@ class AuthorityController:
         approved_authority_state = decision.approved_authority_state
 
         if approved_decision is None or approved_authority_state is None:
-            raise AuthorityReviewError("Accepting review decisions must provide authority outcomes.")
+            raise AuthorityReviewError(
+                "Accepting review decisions must provide authority outcomes."
+            )
 
         if self._would_relax_restricted_runtime_state(
             request=request,
