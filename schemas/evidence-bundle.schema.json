@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/ix-autonomy-assurance-case-runtime/evidence-bundle.schema.json",
+  "title": "IX Autonomy Evidence Bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "bundle_id",
+    "case_id",
+    "records"
+  ],
+  "properties": {
+    "bundle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenario_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "created_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bundle_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^(sha256:[a-f0-9]{64})$"
+    },
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/evidence_record"
+      }
+    }
+  },
+  "$defs": {
+    "evidence_status": {
+      "type": "string",
+      "enum": [
+        "missing",
+        "provided",
+        "accepted",
+        "stale",
+        "invalid"
+      ]
+    },
+    "json_value": {
+      "description": "Any JSON-compatible value.",
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/json_value"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/json_value"
+          }
+        }
+      ]
+    },
+    "evidence_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "kind",
+        "source",
+        "payload"
+      ],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/json_value"
+          }
+        },
+        "status": {
+          "$ref": "#/$defs/evidence_status"
+        },
+        "created_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "content_hash": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^(sha256:[a-f0-9]{64})$"
+        }
+      }
+    }
+  }
+}
