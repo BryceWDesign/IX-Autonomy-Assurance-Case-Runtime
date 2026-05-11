@@ -26,6 +26,7 @@ from ix_autonomy_assurance_case_runtime.scenarios import (
     ExpectedSafeBehavior,
     Scenario,
     ScenarioCatalog,
+    Stressor,
 )
 
 TelemetryValue: TypeAlias = str | int | float | bool | None
@@ -104,7 +105,9 @@ def _as_number(value: TelemetryValue, *, field_name: str) -> float:
     return float(value)
 
 
-def _threshold_as_scalar(threshold: TelemetryThreshold | None, *, field_name: str) -> TelemetryValue:
+def _threshold_as_scalar(
+    threshold: TelemetryThreshold | None, *, field_name: str
+) -> TelemetryValue:
     if threshold is None:
         raise SafetyGateError(f"{field_name} must not be absent.")
     if isinstance(threshold, tuple):
@@ -184,7 +187,9 @@ class SafetyRule:
     def __post_init__(self) -> None:
         object.__setattr__(self, "rule_id", _require_text(self.rule_id, "rule_id"))
         object.__setattr__(self, "name", _require_text(self.name, "name"))
-        object.__setattr__(self, "telemetry_key", _require_text(self.telemetry_key, "telemetry_key"))
+        object.__setattr__(
+            self, "telemetry_key", _require_text(self.telemetry_key, "telemetry_key")
+        )
         object.__setattr__(self, "rationale", _require_text(self.rationale, "rationale"))
         self._validate_operator_shape()
 
@@ -286,7 +291,9 @@ class SafetyGateResult:
             _require_text(self.expected_behavior_id, "expected_behavior_id"),
         )
         object.__setattr__(self, "rationale", _require_text(self.rationale, "rationale"))
-        object.__setattr__(self, "telemetry_source", _require_text(self.telemetry_source, "telemetry_source"))
+        object.__setattr__(
+            self, "telemetry_source", _require_text(self.telemetry_source, "telemetry_source")
+        )
 
     def permits_nominal_execution(self) -> bool:
         """Return whether the result allows unrestricted nominal autonomy."""
@@ -325,7 +332,9 @@ class RuntimeSafetyGate:
 
         scenario = self._get_scenario(scenario_id=scenario_id, catalog=catalog)
         expected_behavior = self._get_expected_behavior(scenario=scenario, catalog=catalog)
-        severe_stressor_ids = self._severe_stressor_ids(scenario=scenario, catalog=catalog)
+        severe_stressor_ids = self._active_severe_stressor_ids(
+            scenario=scenario, catalog=catalog, telemetry=telemetry
+        )
 
         decision = AutonomyDecisionType.ALLOW
         authority_state = RuntimeAuthorityState.AUTONOMOUS_ALLOWED
@@ -338,7 +347,7 @@ class RuntimeSafetyGate:
                 expected_behavior.required_authority_state,
             )
             rationale_parts.append(
-                "Scenario contains severe stressor(s) "
+                "Scenario contains active severe stressor(s) "
                 f"{', '.join(severe_stressor_ids)} and expected safe behavior "
                 f"{expected_behavior.behavior_id!r} restricts autonomy."
             )
@@ -351,16 +360,15 @@ class RuntimeSafetyGate:
                 triggered_rule_ids.append(rule.rule_id)
                 decision = _more_restrictive_decision(decision, rule.decision)
                 authority_state = _more_restrictive_authority(authority_state, rule.authority_state)
-                rationale_parts.append(
-                    f"Safety rule {rule.rule_id!r} triggered: {rule.rationale}"
-                )
+                rationale_parts.append(f"Safety rule {rule.rule_id!r} triggered: {rule.rationale}")
 
         if not rationale_parts:
-            rationale_parts.append("No severe scenario expectation or safety rule restricted autonomy.")
+            rationale_parts.append(
+                "No severe scenario expectation or safety rule restricted autonomy."
+            )
 
         operator_review_required = (
-            decision.is_restrictive()
-            or not authority_state.permits_autonomous_execution()
+            decision.is_restrictive() or not authority_state.permits_autonomous_execution()
         )
         degraded_mode = operator_review_required or bool(triggered_rule_ids)
 
@@ -401,7 +409,12 @@ class RuntimeSafetyGate:
         return behaviors[scenario.expected_behavior_id]
 
     @staticmethod
-    def _severe_stressor_ids(*, scenario: Scenario, catalog: ScenarioCatalog) -> tuple[str, ...]:
+    def _active_severe_stressor_ids(
+        *,
+        scenario: Scenario,
+        catalog: ScenarioCatalog,
+        telemetry: RuntimeTelemetry,
+    ) -> tuple[str, ...]:
         stressors = catalog.stressor_index()
         severe_ids: list[str] = []
         for stressor_id in scenario.stressor_ids:
@@ -410,6 +423,64 @@ class RuntimeSafetyGate:
                     f"Scenario {scenario.scenario_id!r} references missing stressor "
                     f"{stressor_id!r}."
                 )
-            if stressors[stressor_id].requires_restrictive_response():
+            stressor = stressors[stressor_id]
+            if stressor.requires_restrictive_response() and _stressor_trigger_matches(
+                stressor, telemetry
+            ):
                 severe_ids.append(stressor_id)
         return tuple(severe_ids)
+
+
+def _stressor_trigger_matches(stressor: Stressor, telemetry: RuntimeTelemetry) -> bool:
+    """Return whether a stressor's simple trigger condition matches telemetry.
+
+    Unsupported trigger strings are treated as active. That keeps the runtime
+    fail-closed instead of silently allowing autonomy when trigger parsing cannot
+    prove the stressor is inactive.
+    """
+
+    parts = stressor.trigger_condition.split()
+    if len(parts) != 3:
+        return True
+
+    telemetry_key, operator, raw_threshold = parts
+    observed_value = telemetry.get(telemetry_key)
+    if observed_value is None:
+        return False
+
+    if operator in {"<", "<=", ">", ">="}:
+        observed_number = _as_number(observed_value, field_name="observed telemetry value")
+        threshold_number = _as_number(
+            _parse_trigger_literal(raw_threshold), field_name="trigger threshold"
+        )
+        if operator == "<":
+            return observed_number < threshold_number
+        if operator == "<=":
+            return observed_number <= threshold_number
+        if operator == ">":
+            return observed_number > threshold_number
+        return observed_number >= threshold_number
+
+    threshold = _parse_trigger_literal(raw_threshold)
+    if operator in {"==", "="}:
+        return observed_value == threshold
+    if operator == "!=":
+        return observed_value != threshold
+
+    return True
+
+
+def _parse_trigger_literal(value: str) -> TelemetryValue:
+    normalized = value.strip()
+    if normalized in {"true", "True"}:
+        return True
+    if normalized in {"false", "False"}:
+        return False
+    if normalized in {"null", "None"}:
+        return None
+    try:
+        if "." not in normalized and "e" not in normalized.lower():
+            return int(normalized)
+        return float(normalized)
+    except ValueError:
+        return normalized.strip("\"'")
