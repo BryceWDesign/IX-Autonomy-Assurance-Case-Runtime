@@ -10,9 +10,9 @@ from pathlib import Path
 from typing import Any, cast
 
 from ix_autonomy_assurance_case_runtime.assurance_case import (
+    Assumption,
     AssuranceCase,
     AssuranceClaim,
-    Assumption,
     Control,
     EvidenceLink,
     Hazard,
@@ -35,7 +35,7 @@ from ix_autonomy_assurance_case_runtime.evidence import EvidenceBundle, Evidence
 from ix_autonomy_assurance_case_runtime.ledger import LedgerEntry, LedgerRecordType, RunLedger
 from ix_autonomy_assurance_case_runtime.reporting import AssuranceReportGenerator
 from ix_autonomy_assurance_case_runtime.runner import ScenarioRunInput, ScenarioRunner
-from ix_autonomy_assurance_case_runtime.safety_gate import RuntimeTelemetry
+from ix_autonomy_assurance_case_runtime.safety_gate import RuntimeTelemetry, TelemetryValue
 from ix_autonomy_assurance_case_runtime.scenarios import (
     AcceptanceCriterion,
     AutonomyFunction,
@@ -66,7 +66,6 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if not callable(command):
         parser.error("No command selected.")
-        return 2
 
     try:
         return cast(CommandHandler, command)(args)
@@ -144,7 +143,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Build and validate traceability from case/catalog/mission artifacts.",
     )
     audit_traceability.add_argument("--case", required=True, help="Path to assurance-case JSON.")
-    audit_traceability.add_argument("--catalog", required=True, help="Path to scenario-catalog JSON.")
+    audit_traceability.add_argument(
+        "--catalog", required=True, help="Path to scenario-catalog JSON."
+    )
     audit_traceability.add_argument("--mission-need", required=True, help="Mission-need JSON.")
     audit_traceability.add_argument("--requirements", required=True, help="Requirements JSON list.")
     audit_traceability.add_argument("--scenario-id", help="Optional scenario path source.")
@@ -187,7 +188,7 @@ def _cmd_verify_bundle(args: argparse.Namespace) -> int:
 def _cmd_validate_ledger(args: argparse.Namespace) -> int:
     ledger = load_run_ledger(_arg_path(args, "ledger"))
     report = ledger.validate_chain(
-        require_unique_run_ids=bool(getattr(args, "require_unique_run_ids")),
+        require_unique_run_ids=bool(args.require_unique_run_ids),
     )
     _print_json(
         {
@@ -206,9 +207,7 @@ def _cmd_run_scenario(args: argparse.Namespace) -> int:
     catalog = load_scenario_catalog(_arg_path(args, "catalog"))
     telemetry = load_telemetry(_arg_path(args, "telemetry"))
     degradation_engine = DegradationEngine(
-        rules=build_default_degradation_rules()
-        if bool(getattr(args, "default_degradation"))
-        else (),
+        rules=build_default_degradation_rules() if bool(args.default_degradation) else (),
     )
     runner = ScenarioRunner(degradation_engine=degradation_engine)
     result = runner.run(
@@ -317,7 +316,8 @@ def load_scenario_catalog(path: Path) -> ScenarioCatalog:
             for item in _get_list_of_dicts(data, "operational_contexts")
         ),
         autonomy_functions=tuple(
-            _build_autonomy_function(item) for item in _get_list_of_dicts(data, "autonomy_functions")
+            _build_autonomy_function(item)
+            for item in _get_list_of_dicts(data, "autonomy_functions")
         ),
         operating_conditions=tuple(
             _build_operating_condition(item)
@@ -325,7 +325,8 @@ def load_scenario_catalog(path: Path) -> ScenarioCatalog:
         ),
         stressors=tuple(_build_stressor(item) for item in _get_list_of_dicts(data, "stressors")),
         expected_behaviors=tuple(
-            _build_expected_behavior(item) for item in _get_list_of_dicts(data, "expected_behaviors")
+            _build_expected_behavior(item)
+            for item in _get_list_of_dicts(data, "expected_behaviors")
         ),
         acceptance_criteria=tuple(
             _build_acceptance_criterion(item)
@@ -342,8 +343,10 @@ def load_telemetry(path: Path) -> RuntimeTelemetry:
     """Load runtime telemetry from JSON."""
 
     data = _load_json_object(path)
-    values = _get_json_object(data, "values")
-    return RuntimeTelemetry(values=values, source=_get_str(data, "source", default="json-telemetry"))
+    values = _get_telemetry_values(data, "values")
+    return RuntimeTelemetry(
+        values=values, source=_get_str(data, "source", default="json-telemetry")
+    )
 
 
 def load_evidence_bundle(path: Path) -> EvidenceBundle:
@@ -718,6 +721,21 @@ def _get_json_object(data: dict[str, Any], key: str) -> dict[str, JSONValue]:
     if not isinstance(value, dict):
         raise ValueError(f"{key!r} must be a JSON object.")
     return cast(dict[str, JSONValue], value)
+
+
+def _get_telemetry_values(data: dict[str, Any], key: str) -> dict[str, TelemetryValue]:
+    value = data.get(key, {})
+    if not isinstance(value, dict):
+        raise ValueError(f"{key!r} must be a JSON object.")
+
+    values: dict[str, TelemetryValue] = {}
+    for item_key, item_value in value.items():
+        if not isinstance(item_key, str):
+            raise ValueError(f"{key!r} must contain only string keys.")
+        if not (item_value is None or isinstance(item_value, str | int | float | bool)):
+            raise ValueError(f"{key!r} values must be strings, numbers, booleans, or null.")
+        values[item_key] = item_value
+    return values
 
 
 def _get_list_of_dicts(data: dict[str, Any], key: str) -> list[dict[str, Any]]:
