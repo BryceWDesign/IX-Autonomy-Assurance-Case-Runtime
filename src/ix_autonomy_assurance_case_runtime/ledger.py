@@ -290,7 +290,7 @@ class RunLedger:
         """Return a new ledger with an evidence bundle recorded as an entry."""
 
         hashed_bundle = bundle.with_computed_hashes()
-        record_ids = [record.evidence_id for record in hashed_bundle.records]
+        record_ids: list[JSONValue] = [record.evidence_id for record in hashed_bundle.records]
         payload: dict[str, JSONValue] = {
             "bundle_id": hashed_bundle.bundle_id,
             "case_id": hashed_bundle.case_id,
@@ -344,9 +344,7 @@ class RunLedger:
             if entry.entry_hash is None:
                 warnings.append(f"Ledger entry {entry.entry_id!r} has no entry hash.")
             elif not entry.has_valid_entry_hash():
-                errors.append(
-                    f"Ledger entry {entry.entry_id!r} hash does not match entry content."
-                )
+                errors.append(f"Ledger entry {entry.entry_id!r} hash does not match entry content.")
 
             if index == 1:
                 if entry.previous_entry_hash is not None:
@@ -356,7 +354,9 @@ class RunLedger:
                 continue
 
             previous_entry = self.entries[index - 2]
-            expected_previous_hash = previous_entry.entry_hash or previous_entry.calculate_entry_hash()
+            expected_previous_hash = (
+                previous_entry.entry_hash or previous_entry.calculate_entry_hash()
+            )
 
             if entry.previous_entry_hash != expected_previous_hash:
                 errors.append(
