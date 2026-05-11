@@ -34,12 +34,12 @@ from ix_autonomy_assurance_case_runtime.scenarios import (
 from ix_autonomy_assurance_case_runtime.traceability import (
     MissionNeed,
     Requirement,
+    TraceabilityError,
+    TraceabilityGraph,
     TraceEdge,
     TraceEdgeType,
     TraceNode,
     TraceNodeType,
-    TraceabilityError,
-    TraceabilityGraph,
     build_traceability_graph,
 )
 
@@ -221,7 +221,9 @@ def build_graph() -> TraceabilityGraph:
         requirements=(
             Requirement(
                 requirement_id="REQ-001",
-                statement="The autonomy function shall enter safe-hold when navigation is degraded.",
+                statement=(
+                    "The autonomy function shall enter safe-hold when navigation is degraded."
+                ),
                 verification_method="fault-injection scenario with runtime evidence",
                 source="system safety requirement",
             ),
