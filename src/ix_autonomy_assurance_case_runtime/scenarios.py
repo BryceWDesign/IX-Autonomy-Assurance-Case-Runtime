@@ -11,6 +11,7 @@ safe behavior such as clamp, defer, veto, or safe-hold.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 
 from ix_autonomy_assurance_case_runtime.contracts import (
@@ -54,7 +55,9 @@ class OperationalContext:
         object.__setattr__(self, "context_id", _require_text(self.context_id, "context_id"))
         object.__setattr__(self, "name", _require_text(self.name, "name"))
         object.__setattr__(self, "environment", _require_text(self.environment, "environment"))
-        object.__setattr__(self, "mission_phase", _require_text(self.mission_phase, "mission_phase"))
+        object.__setattr__(
+            self, "mission_phase", _require_text(self.mission_phase, "mission_phase")
+        )
         object.__setattr__(self, "description", _require_text(self.description, "description"))
         object.__setattr__(self, "constraints", self._normalize_constraints(self.constraints))
 
@@ -117,7 +120,9 @@ class OperatingCondition:
         object.__setattr__(self, "condition_id", _require_text(self.condition_id, "condition_id"))
         object.__setattr__(self, "name", _require_text(self.name, "name"))
         object.__setattr__(self, "description", _require_text(self.description, "description"))
-        object.__setattr__(self, "telemetry_key", _require_text(self.telemetry_key, "telemetry_key"))
+        object.__setattr__(
+            self, "telemetry_key", _require_text(self.telemetry_key, "telemetry_key")
+        )
         object.__setattr__(
             self,
             "expected_range",
@@ -322,7 +327,10 @@ class Scenario:
     def requires_evidence(self, criteria: dict[str, AcceptanceCriterion]) -> bool:
         """Return whether any referenced acceptance criterion requires evidence."""
 
-        return any(criteria[criterion_id].requires_evidence for criterion_id in self.acceptance_criterion_ids)
+        return any(
+            criteria[criterion_id].requires_evidence
+            for criterion_id in self.acceptance_criterion_ids
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -522,9 +530,7 @@ class ScenarioCatalog:
 
         normalized_id = _require_text(mission_thread_id, "mission_thread_id")
         return tuple(
-            scenario
-            for scenario in self.scenarios
-            if scenario.mission_thread_id == normalized_id
+            scenario for scenario in self.scenarios if scenario.mission_thread_id == normalized_id
         )
 
     def _validate_unique_identifiers(self, errors: list[str]) -> None:
@@ -569,7 +575,7 @@ class ScenarioCatalog:
     @staticmethod
     def _require_existing(
         ids: tuple[str, ...],
-        index: dict[str, object],
+        index: Mapping[str, object],
         owner_id: str,
         reference_name: str,
         errors: list[str],
@@ -577,6 +583,5 @@ class ScenarioCatalog:
         for reference_id in ids:
             if reference_id not in index:
                 errors.append(
-                    f"Artifact {owner_id!r} references missing {reference_name} "
-                    f"{reference_id!r}."
+                    f"Artifact {owner_id!r} references missing {reference_name} {reference_id!r}."
                 )
