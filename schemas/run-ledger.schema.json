@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/ix-autonomy-assurance-case-runtime/run-ledger.schema.json",
+  "title": "IX Autonomy Run Ledger",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ledger_id",
+    "entries"
+  ],
+  "properties": {
+    "ledger_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ledger_entry"
+      }
+    }
+  },
+  "$defs": {
+    "json_value": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/json_value"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/json_value"
+          }
+        }
+      ]
+    },
+    "sha256_hash": {
+      "type": "string",
+      "pattern": "^(sha256:[a-f0-9]{64})$"
+    },
+    "ledger_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entry_id",
+        "sequence_number",
+        "record_type",
+        "case_id",
+        "artifact_id",
+        "artifact_hash",
+        "payload"
+      ],
+      "properties": {
+        "entry_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sequence_number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "record_type": {
+          "type": "string",
+          "enum": [
+            "scenario_run",
+            "evidence_bundle",
+            "verification_summary",
+            "assurance_report",
+            "human_review",
+            "manual_note"
+          ]
+        },
+        "case_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_hash": {
+          "$ref": "#/$defs/sha256_hash"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/json_value"
+          }
+        },
+        "run_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "scenario_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "previous_entry_hash": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/sha256_hash"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "created_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "entry_hash": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/sha256_hash"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
