@@ -55,6 +55,13 @@ from ix_autonomy_assurance_case_runtime.evidence import (
     sha256_canonical_json,
     sha256_hexdigest,
 )
+from ix_autonomy_assurance_case_runtime.ledger import (
+    LedgerEntry,
+    LedgerRecordType,
+    LedgerRuntimeError,
+    LedgerValidationReport,
+    RunLedger,
+)
 from ix_autonomy_assurance_case_runtime.project import (
     PROJECT_NAME,
     ProjectIdentity,
@@ -153,6 +160,10 @@ __all__ = [
     "ExpectedSafeBehavior",
     "Hazard",
     "HazardSeverity",
+    "LedgerEntry",
+    "LedgerRecordType",
+    "LedgerRuntimeError",
+    "LedgerValidationReport",
     "MissionNeed",
     "MissionThread",
     "Mitigation",
@@ -165,6 +176,7 @@ __all__ = [
     "Requirement",
     "ReviewActor",
     "ReviewDisposition",
+    "RunLedger",
     "RuntimeAuthorityState",
     "RuntimeSafetyGate",
     "RuntimeTelemetry",
