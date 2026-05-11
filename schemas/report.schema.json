@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/ix-autonomy-assurance-case-runtime/report.schema.json",
+  "title": "IX Autonomy Assurance Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "accepted",
+    "case_id",
+    "generated_by",
+    "overall_result",
+    "report_id",
+    "run_id",
+    "scenario_id",
+    "sections"
+  ],
+  "properties": {
+    "accepted": {
+      "type": "boolean"
+    },
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "overall_result": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail",
+        "inconclusive",
+        "not_run"
+      ]
+    },
+    "report_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenario_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/report_section"
+      }
+    }
+  },
+  "$defs": {
+    "report_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lines",
+        "severity",
+        "title"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "lines": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
