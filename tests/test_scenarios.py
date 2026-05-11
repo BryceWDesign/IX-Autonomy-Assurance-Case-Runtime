@@ -188,13 +188,11 @@ def test_catalog_reports_missing_scenario_references() -> None:
     assert "Artifact 'MT-001' references missing scenario 'SCN-MISSING'." in report.errors
     assert "Artifact 'SCN-001' references missing mission thread 'MT-MISSING'." in report.errors
     assert (
-        "Artifact 'SCN-001' references missing operational context 'CTX-MISSING'."
-        in report.errors
+        "Artifact 'SCN-001' references missing operational context 'CTX-MISSING'." in report.errors
     )
     assert "Artifact 'SCN-001' references missing autonomy function 'AF-MISSING'." in report.errors
     assert (
-        "Artifact 'SCN-001' references missing operating condition 'COND-MISSING'."
-        in report.errors
+        "Artifact 'SCN-001' references missing operating condition 'COND-MISSING'." in report.errors
     )
     assert "Artifact 'SCN-001' references missing stressor 'STR-MISSING'." in report.errors
     assert (
@@ -202,8 +200,7 @@ def test_catalog_reports_missing_scenario_references() -> None:
         in report.errors
     )
     assert (
-        "Artifact 'SCN-001' references missing acceptance criterion 'AC-MISSING'."
-        in report.errors
+        "Artifact 'SCN-001' references missing acceptance criterion 'AC-MISSING'." in report.errors
     )
 
 
