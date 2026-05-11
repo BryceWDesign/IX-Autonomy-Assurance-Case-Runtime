@@ -20,7 +20,11 @@ from ix_autonomy_assurance_case_runtime.contracts import (
     VerificationResult,
 )
 from ix_autonomy_assurance_case_runtime.evidence import EvidenceBundle, EvidenceRecord
-from ix_autonomy_assurance_case_runtime.runner import ScenarioRunInput, ScenarioRunner
+from ix_autonomy_assurance_case_runtime.runner import (
+    ScenarioRunInput,
+    ScenarioRunner,
+    ScenarioRunResult,
+)
 from ix_autonomy_assurance_case_runtime.safety_gate import RuntimeTelemetry
 from ix_autonomy_assurance_case_runtime.scenarios import (
     AcceptanceCriterion,
@@ -204,8 +208,8 @@ def build_scenario_catalog(
 def build_run_result(
     *,
     catalog: ScenarioCatalog | None = None,
-    telemetry_confidence: float = 0.92,
-):
+    telemetry_confidence: float = 0.62,
+) -> ScenarioRunResult:
     scenario_catalog = catalog or build_scenario_catalog()
     runner = ScenarioRunner()
     return runner.run(
@@ -277,7 +281,7 @@ def test_verification_engine_fails_when_expected_behavior_is_not_satisfied() -> 
         telemetry_confidence=0.99,
     )
 
-    assert run_result.verification_result is VerificationResult.PASS
+    assert run_result.verification_result is VerificationResult.FAIL
 
     summary = VerificationEngine(require_traceability=False).verify_run(
         assurance_case=build_assurance_case(),
@@ -287,7 +291,7 @@ def test_verification_engine_fails_when_expected_behavior_is_not_satisfied() -> 
 
     assert summary.overall_result is VerificationResult.FAIL
     assert "traceability-graph-present" in summary.follow_up_check_ids()
-    assert "expected-safe-behavior" not in summary.failed_check_ids()
+    assert "expected-safe-behavior" in summary.failed_check_ids()
 
 
 def test_verification_engine_fails_when_acceptance_criterion_result_mismatches() -> None:
