@@ -84,6 +84,16 @@ from ix_autonomy_assurance_case_runtime.prototype_target import (
     assess_serious_prototype_maturity,
     build_serious_prototype_targets,
 )
+from ix_autonomy_assurance_case_runtime.registry import (
+    DeploymentEnvironment,
+    RegisteredDeployment,
+    RegisteredModel,
+    RegisteredSystem,
+    RegisteredUseCase,
+    RegisteredUseCategory,
+    RegistryLifecycleState,
+    RegistryRiskTier,
+)
 from ix_autonomy_assurance_case_runtime.reporting import (
     AssuranceReport,
     AssuranceReportGenerator,
@@ -168,6 +178,7 @@ __all__ = [
     "DegradationRule",
     "DegradationRuntimeError",
     "DegradationSignal",
+    "DeploymentEnvironment",
     "EvidenceBundle",
     "EvidenceBundleValidationReport",
     "EvidenceLink",
@@ -187,6 +198,13 @@ __all__ = [
     "OperatingCondition",
     "OperationalContext",
     "ProjectIdentity",
+    "RegisteredDeployment",
+    "RegisteredModel",
+    "RegisteredSystem",
+    "RegisteredUseCase",
+    "RegisteredUseCategory",
+    "RegistryLifecycleState",
+    "RegistryRiskTier",
     "ReportGenerationError",
     "ReportSection",
     "ReportSeverity",
