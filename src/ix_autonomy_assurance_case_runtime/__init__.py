@@ -101,6 +101,14 @@ from ix_autonomy_assurance_case_runtime.registry_catalog import (
     RegistryValidationFinding,
     RegistryValidationReport,
 )
+from ix_autonomy_assurance_case_runtime.registry_evidence import (
+    RegistryEvidenceCoverageReport,
+    RegistryEvidenceFinding,
+    RegistryEvidenceFindingSeverity,
+    RegistryEvidenceReference,
+    RegistryEvidenceValidator,
+    collect_registry_evidence_references,
+)
 from ix_autonomy_assurance_case_runtime.reporting import (
     AssuranceReport,
     AssuranceReportGenerator,
@@ -221,6 +229,11 @@ __all__ = [
     "RegisteredUseCase",
     "RegisteredUseCategory",
     "RegistryCatalog",
+    "RegistryEvidenceCoverageReport",
+    "RegistryEvidenceFinding",
+    "RegistryEvidenceFindingSeverity",
+    "RegistryEvidenceReference",
+    "RegistryEvidenceValidator",
     "RegistryFindingSeverity",
     "RegistryLifecycleState",
     "RegistryReferenceType",
@@ -273,6 +286,7 @@ __all__ = [
     "build_serious_prototype_targets",
     "build_traceability_graph",
     "canonical_json_bytes",
+    "collect_registry_evidence_references",
     "get_project_identity",
     "sha256_canonical_json",
     "sha256_hexdigest",
