@@ -82,6 +82,13 @@ from ix_autonomy_assurance_case_runtime.policy_evaluator import (
     PolicyRuleEvaluation,
     rule_matches,
 )
+from ix_autonomy_assurance_case_runtime.policy_waiver_evidence import (
+    PolicyWaiverEvidenceCoverageReport,
+    PolicyWaiverEvidenceFinding,
+    PolicyWaiverEvidenceFindingSeverity,
+    PolicyWaiverEvidenceValidator,
+    PolicyWaiverReferenceType,
+)
 from ix_autonomy_assurance_case_runtime.project import (
     PROJECT_NAME,
     ProjectIdentity,
@@ -257,6 +264,11 @@ __all__ = [
     "PolicyRuleEvaluation",
     "PolicySubjectType",
     "PolicyWaiver",
+    "PolicyWaiverEvidenceCoverageReport",
+    "PolicyWaiverEvidenceFinding",
+    "PolicyWaiverEvidenceFindingSeverity",
+    "PolicyWaiverEvidenceValidator",
+    "PolicyWaiverReferenceType",
     "ProjectIdentity",
     "PrototypeCapabilityArea",
     "PrototypeCapabilityTarget",
