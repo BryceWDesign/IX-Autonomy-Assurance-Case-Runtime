@@ -109,6 +109,15 @@ from ix_autonomy_assurance_case_runtime.registry_evidence import (
     RegistryEvidenceValidator,
     collect_registry_evidence_references,
 )
+from ix_autonomy_assurance_case_runtime.registry_readiness import (
+    REGISTRY_CAPABILITY_ID,
+    RegistryLayerReadinessEvaluator,
+    RegistryLayerReadinessReport,
+    RegistryReadinessDecision,
+    RegistryReadinessFinding,
+    RegistryReadinessFindingSeverity,
+    RegistryReadinessFindingSource,
+)
 from ix_autonomy_assurance_case_runtime.reporting import (
     AssuranceReport,
     AssuranceReportGenerator,
@@ -223,6 +232,7 @@ __all__ = [
     "PrototypeReadinessFinding",
     "PrototypeReadinessGate",
     "PrototypeReadinessReport",
+    "REGISTRY_CAPABILITY_ID",
     "RegisteredDeployment",
     "RegisteredModel",
     "RegisteredSystem",
@@ -235,7 +245,13 @@ __all__ = [
     "RegistryEvidenceReference",
     "RegistryEvidenceValidator",
     "RegistryFindingSeverity",
+    "RegistryLayerReadinessEvaluator",
+    "RegistryLayerReadinessReport",
     "RegistryLifecycleState",
+    "RegistryReadinessDecision",
+    "RegistryReadinessFinding",
+    "RegistryReadinessFindingSeverity",
+    "RegistryReadinessFindingSource",
     "RegistryReferenceType",
     "RegistryRiskTier",
     "RegistryValidationFinding",
