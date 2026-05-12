@@ -62,6 +62,17 @@ from ix_autonomy_assurance_case_runtime.ledger import (
     LedgerValidationReport,
     RunLedger,
 )
+from ix_autonomy_assurance_case_runtime.policy import (
+    PolicyActionCategory,
+    PolicyAuthorityRequirement,
+    PolicyDecision,
+    PolicyLifecycleState,
+    PolicyPack,
+    PolicyRiskTier,
+    PolicyRule,
+    PolicySubjectType,
+    PolicyWaiver,
+)
 from ix_autonomy_assurance_case_runtime.project import (
     PROJECT_NAME,
     ProjectIdentity,
@@ -222,6 +233,15 @@ __all__ = [
     "Mitigation",
     "OperatingCondition",
     "OperationalContext",
+    "PolicyActionCategory",
+    "PolicyAuthorityRequirement",
+    "PolicyDecision",
+    "PolicyLifecycleState",
+    "PolicyPack",
+    "PolicyRiskTier",
+    "PolicyRule",
+    "PolicySubjectType",
+    "PolicyWaiver",
     "ProjectIdentity",
     "PrototypeCapabilityArea",
     "PrototypeCapabilityTarget",
