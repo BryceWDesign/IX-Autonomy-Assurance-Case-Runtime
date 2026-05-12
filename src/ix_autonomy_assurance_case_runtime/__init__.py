@@ -73,6 +73,15 @@ from ix_autonomy_assurance_case_runtime.policy import (
     PolicySubjectType,
     PolicyWaiver,
 )
+from ix_autonomy_assurance_case_runtime.policy_evaluator import (
+    PolicyEvaluationFinding,
+    PolicyEvaluationFindingSeverity,
+    PolicyEvaluationReport,
+    PolicyEvaluationRequest,
+    PolicyEvaluator,
+    PolicyRuleEvaluation,
+    rule_matches,
+)
 from ix_autonomy_assurance_case_runtime.project import (
     PROJECT_NAME,
     ProjectIdentity,
@@ -236,10 +245,16 @@ __all__ = [
     "PolicyActionCategory",
     "PolicyAuthorityRequirement",
     "PolicyDecision",
+    "PolicyEvaluationFinding",
+    "PolicyEvaluationFindingSeverity",
+    "PolicyEvaluationReport",
+    "PolicyEvaluationRequest",
+    "PolicyEvaluator",
     "PolicyLifecycleState",
     "PolicyPack",
     "PolicyRiskTier",
     "PolicyRule",
+    "PolicyRuleEvaluation",
     "PolicySubjectType",
     "PolicyWaiver",
     "ProjectIdentity",
@@ -324,6 +339,7 @@ __all__ = [
     "canonical_json_bytes",
     "collect_registry_evidence_references",
     "get_project_identity",
+    "rule_matches",
     "sha256_canonical_json",
     "sha256_hexdigest",
 ]
