@@ -67,6 +67,14 @@ from ix_autonomy_assurance_case_runtime.framework_crosswalk import (
     FrameworkCrosswalkFinding,
     FrameworkCrosswalkFindingSeverity,
 )
+from ix_autonomy_assurance_case_runtime.framework_crosswalk_evidence import (
+    FrameworkEvidenceCoverageReport,
+    FrameworkEvidenceFinding,
+    FrameworkEvidenceFindingSeverity,
+    FrameworkEvidenceReference,
+    FrameworkEvidenceValidator,
+    collect_framework_evidence_references,
+)
 from ix_autonomy_assurance_case_runtime.ledger import (
     LedgerEntry,
     LedgerRecordType,
@@ -269,6 +277,11 @@ __all__ = [
     "FrameworkCrosswalk",
     "FrameworkCrosswalkFinding",
     "FrameworkCrosswalkFindingSeverity",
+    "FrameworkEvidenceCoverageReport",
+    "FrameworkEvidenceFinding",
+    "FrameworkEvidenceFindingSeverity",
+    "FrameworkEvidenceReference",
+    "FrameworkEvidenceValidator",
     "Hazard",
     "HazardSeverity",
     "LedgerEntry",
@@ -387,6 +400,7 @@ __all__ = [
     "build_serious_prototype_targets",
     "build_traceability_graph",
     "canonical_json_bytes",
+    "collect_framework_evidence_references",
     "collect_registry_evidence_references",
     "get_project_identity",
     "rule_matches",
