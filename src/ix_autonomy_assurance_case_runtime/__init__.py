@@ -67,6 +67,15 @@ from ix_autonomy_assurance_case_runtime.project import (
     ProjectIdentity,
     get_project_identity,
 )
+from ix_autonomy_assurance_case_runtime.prototype_target import (
+    BASELINE_MATURITY_PERCENT,
+    SERIOUS_PROTOTYPE_TARGET_PERCENT,
+    PrototypeCapabilityArea,
+    PrototypeCapabilityTarget,
+    PrototypeMaturityAssessment,
+    assess_serious_prototype_maturity,
+    build_serious_prototype_targets,
+)
 from ix_autonomy_assurance_case_runtime.reporting import (
     AssuranceReport,
     AssuranceReportGenerator,
@@ -125,6 +134,7 @@ from ix_autonomy_assurance_case_runtime.verification import (
 __all__ = [
     "PROJECT_NAME",
     "AcceptanceCriterion",
+    "BASELINE_MATURITY_PERCENT",
     "AssuranceCase",
     "AssuranceCaseStatus",
     "AssuranceCaseValidationReport",
@@ -170,6 +180,9 @@ __all__ = [
     "OperatingCondition",
     "OperationalContext",
     "ProjectIdentity",
+    "PrototypeCapabilityArea",
+    "PrototypeCapabilityTarget",
+    "PrototypeMaturityAssessment",
     "ReportGenerationError",
     "ReportSection",
     "ReportSeverity",
@@ -178,6 +191,7 @@ __all__ = [
     "ReviewDisposition",
     "RunLedger",
     "RuntimeAuthorityState",
+    "SERIOUS_PROTOTYPE_TARGET_PERCENT",
     "RuntimeSafetyGate",
     "RuntimeTelemetry",
     "RuntimeVerificationSummary",
@@ -209,7 +223,9 @@ __all__ = [
     "VerificationIssueSeverity",
     "VerificationResult",
     "__version__",
+    "assess_serious_prototype_maturity",
     "build_contract_catalog",
+    "build_serious_prototype_targets",
     "build_default_degradation_rules",
     "build_traceability_graph",
     "canonical_json_bytes",
