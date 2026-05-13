@@ -20,7 +20,6 @@ from ix_autonomy_assurance_case_runtime.contracts import ContractValueError, Run
 from ix_autonomy_assurance_case_runtime.evidence import EvidenceBundle
 from ix_autonomy_assurance_case_runtime.export_package import (
     ExportArtifactKind,
-    ExportArtifactReference,
     ExportPackageManifest,
     ExportRedactionRule,
 )
@@ -305,7 +304,11 @@ class ExportPackageValidator:
             )
 
         for artifact in manifest.artifacts:
-            if artifact.required and artifact.kind.requires_evidence_reference() and not artifact.evidence_bundle_ids:
+            if (
+                artifact.required
+                and artifact.kind.requires_evidence_reference()
+                and not artifact.evidence_bundle_ids
+            ):
                 findings.append(
                     ExportPackageValidationFinding(
                         finding_id=f"artifact-{artifact.artifact_id}-missing-evidence",
