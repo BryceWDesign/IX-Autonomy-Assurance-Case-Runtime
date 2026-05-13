@@ -14,7 +14,6 @@ from ix_autonomy_assurance_case_runtime.prototype_target import (
     serious_prototype_capability_ids,
 )
 
-
 ORIGINAL_SERIOUS_PROTOTYPE_CAPABILITIES = (
     "registry-layer",
     "policy-pack-engine",
