@@ -229,3 +229,30 @@ def test_claim_guardrail_public_exports_are_available() -> None:
     for export_name in expected_exports:
         assert export_name in ix.__all__
         assert hasattr(ix, export_name)
+
+
+def test_federal_evaluation_profile_public_exports_are_available() -> None:
+    expected_exports = (
+        "FEDERAL_EVALUATION_PROFILE_CAPABILITY_ID",
+        "REQUIRED_CORE_EVALUATION_CONCERNS",
+        "EvaluationAlignmentStatus",
+        "EvaluationEvidenceExpectation",
+        "FederalEvaluationConcernMapping",
+        "FederalEvaluationLayerReadinessEvaluator",
+        "FederalEvaluationLayerReadinessReport",
+        "FederalEvaluationProfile",
+        "FederalEvaluationProfileValidator",
+        "FederalEvaluationReadinessDecision",
+        "FederalEvaluationReadinessFinding",
+        "FederalEvaluationReadinessFindingSeverity",
+        "FederalEvaluationReadinessFindingSource",
+        "FederalEvaluationValidationFinding",
+        "FederalEvaluationValidationFindingSeverity",
+        "FederalEvaluationValidationFindingSource",
+        "FederalEvaluationValidationReport",
+        "FederalReviewConcern",
+    )
+
+    for export_name in expected_exports:
+        assert export_name in ix.__all__
+        assert hasattr(ix, export_name)
