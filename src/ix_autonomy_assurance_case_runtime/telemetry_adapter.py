@@ -27,6 +27,7 @@ from ix_autonomy_assurance_case_runtime.telemetry import (
     TelemetrySchemaField,
     TelemetrySource,
     TelemetrySourceKind,
+    TelemetryTrustLevel,
 )
 
 
@@ -632,7 +633,10 @@ class TelemetryAdapter:
     ) -> tuple[tuple[TelemetryAdapterFinding, ...], tuple[TelemetryQualityFlag, ...]]:
         """Validate telemetry source trust posture."""
 
-        if source.can_support_acceptance():
+        if source.can_support_acceptance() or (
+            source.kind is TelemetrySourceKind.LOG_REPLAY
+            and source.trust_level.rank >= TelemetryTrustLevel.MODERATE.rank
+        ):
             return (), ()
 
         severity = (
