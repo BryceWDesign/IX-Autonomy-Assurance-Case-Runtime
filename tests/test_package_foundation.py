@@ -199,3 +199,33 @@ def test_assurance_dossier_public_exports_are_available() -> None:
     for export_name in expected_exports:
         assert export_name in ix.__all__
         assert hasattr(ix, export_name)
+
+
+def test_claim_guardrail_public_exports_are_available() -> None:
+    expected_exports = (
+        "CLAIM_GUARDRAIL_CAPABILITY_ID",
+        "ClaimAudience",
+        "ClaimEvidenceReference",
+        "ClaimEvidenceStrength",
+        "ClaimGuardrailLayerReadinessEvaluator",
+        "ClaimGuardrailLayerReadinessReport",
+        "ClaimGuardrailReadinessDecision",
+        "ClaimGuardrailReadinessFinding",
+        "ClaimGuardrailReadinessFindingSeverity",
+        "ClaimGuardrailReadinessFindingSource",
+        "ClaimGuardrailValidationFinding",
+        "ClaimGuardrailValidationFindingSeverity",
+        "ClaimGuardrailValidationFindingSource",
+        "ClaimGuardrailValidationReport",
+        "ClaimGuardrailValidator",
+        "ClaimProhibitedPhraseRule",
+        "ClaimReleasePackage",
+        "ClaimReviewStatus",
+        "ClaimRiskLevel",
+        "ClaimStatementType",
+        "EvidenceBackedClaim",
+    )
+
+    for export_name in expected_exports:
+        assert export_name in ix.__all__
+        assert hasattr(ix, export_name)
