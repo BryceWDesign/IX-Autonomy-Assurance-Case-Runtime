@@ -194,6 +194,15 @@ from ix_autonomy_assurance_case_runtime.prototype_readiness import (
     PrototypeReadinessGate,
     PrototypeReadinessReport,
 )
+from ix_autonomy_assurance_case_runtime.prototype_rollup import (
+    CapabilityLayerReport,
+    CapabilityLayerRollupEntry,
+    PrototypeCapabilityRollupEvaluator,
+    PrototypeCapabilityRollupReport,
+    PrototypeRollupFinding,
+    PrototypeRollupFindingSeverity,
+    PrototypeRollupFindingSource,
+)
 from ix_autonomy_assurance_case_runtime.prototype_target import (
     BASELINE_MATURITY_PERCENT,
     SERIOUS_PROTOTYPE_TARGET_PERCENT,
@@ -438,6 +447,8 @@ __all__ = [
     "AutonomyDecisionType",
     "AutonomyFunction",
     "BASELINE_MATURITY_PERCENT",
+    "CapabilityLayerReport",
+    "CapabilityLayerRollupEntry",
     "ConditionOperator",
     "ContractDefinition",
     "ContractValueError",
@@ -557,6 +568,8 @@ __all__ = [
     "PolicyWaiverReferenceType",
     "ProjectIdentity",
     "PrototypeCapabilityArea",
+    "PrototypeCapabilityRollupEvaluator",
+    "PrototypeCapabilityRollupReport",
     "PrototypeCapabilityTarget",
     "PrototypeClaimLevel",
     "PrototypeFindingSeverity",
@@ -565,6 +578,9 @@ __all__ = [
     "PrototypeReadinessFinding",
     "PrototypeReadinessGate",
     "PrototypeReadinessReport",
+    "PrototypeRollupFinding",
+    "PrototypeRollupFindingSeverity",
+    "PrototypeRollupFindingSource",
     "ProvenanceArtifactType",
     "ProvenanceAttestation",
     "ProvenanceDigestAlgorithm",
