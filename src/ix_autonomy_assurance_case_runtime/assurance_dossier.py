@@ -198,9 +198,13 @@ class DossierArtifactReference:
             ),
         )
         object.__setattr__(self, "notes", _normalize_text_tuple(self.notes, "notes"))
-        if not self.evidence_bundle_ids and self.kind is not DossierArtifactKind.PROVENANCE_MANIFEST:
+        if (
+            not self.evidence_bundle_ids
+            and self.kind is not DossierArtifactKind.PROVENANCE_MANIFEST
+        ):
             raise ContractValueError(
-                "dossier artifacts require evidence_bundle_ids unless they are provenance manifests."
+                "dossier artifacts require evidence_bundle_ids unless they are "
+                "provenance manifests."
             )
 
     def is_provenance_backed(self) -> bool:
@@ -255,7 +259,9 @@ class DossierEvidenceReference:
         if not self.supports_artifact_ids:
             raise ContractValueError("dossier evidence references require supports_artifact_ids.")
         if not self.supports_requirement_ids:
-            raise ContractValueError("dossier evidence references require supports_requirement_ids.")
+            raise ContractValueError(
+                "dossier evidence references require supports_requirement_ids."
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -416,7 +422,11 @@ class AssuranceDossierManifest:
     def open_trace_thread_ids(self) -> tuple[str, ...]:
         """Return trace thread IDs that are not closed."""
 
-        return tuple(thread.trace_thread_id for thread in self.trace_threads if not thread.is_closed())
+        return tuple(
+            thread.trace_thread_id
+            for thread in self.trace_threads
+            if not thread.is_closed()
+        )
 
     def blocking_trace_thread_ids(self) -> tuple[str, ...]:
         """Return trace thread IDs that explicitly block acceptance."""
@@ -434,14 +444,18 @@ class AssuranceDossierManifest:
         """Return runtime artifact IDs in manifest order."""
 
         return tuple(
-            artifact.artifact_id for artifact in self.artifacts if artifact.kind.is_runtime_artifact()
+            artifact.artifact_id
+            for artifact in self.artifacts
+            if artifact.kind.is_runtime_artifact()
         )
 
     def closure_artifact_ids(self) -> tuple[str, ...]:
         """Return closure artifact IDs in manifest order."""
 
         return tuple(
-            artifact.artifact_id for artifact in self.artifacts if artifact.kind.is_closure_artifact()
+            artifact.artifact_id
+            for artifact in self.artifacts
+            if artifact.kind.is_closure_artifact()
         )
 
     def required_evidence_bundle_ids(self) -> tuple[str, ...]:
