@@ -215,7 +215,11 @@ class ExportArtifactReference:
             ),
         )
         object.__setattr__(self, "tags", _normalize_text_tuple(self.tags, "tags"))
-        if self.required and self.kind.requires_evidence_reference() and not self.evidence_bundle_ids:
+        if (
+            self.required
+            and self.kind.requires_evidence_reference()
+            and not self.evidence_bundle_ids
+        ):
             raise ContractValueError(
                 "required export artifacts of this kind require evidence_bundle_ids."
             )
