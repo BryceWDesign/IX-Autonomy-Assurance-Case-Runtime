@@ -306,7 +306,10 @@ class ClaimGuardrailLayerReadinessEvaluator:
                 )
             )
 
-        if package.audience.requires_strict_language_review() and not package.limitation_claim_ids():
+        if (
+            package.audience.requires_strict_language_review()
+            and not package.limitation_claim_ids()
+        ):
             findings.append(
                 ClaimGuardrailReadinessFinding(
                     finding_id=f"package-{package.package_id}-missing-limitation-claim",
