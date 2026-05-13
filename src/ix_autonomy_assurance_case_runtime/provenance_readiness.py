@@ -29,7 +29,6 @@ from ix_autonomy_assurance_case_runtime.provenance_verifier import (
     ProvenanceManifestVerifier,
     ProvenanceVerificationFinding,
     ProvenanceVerificationFindingSeverity,
-    ProvenanceVerificationFindingSource,
     ProvenanceVerificationPolicy,
 )
 
