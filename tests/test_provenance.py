@@ -17,7 +17,6 @@ from ix_autonomy_assurance_case_runtime.provenance import (
     ProvenanceVerificationStatus,
 )
 
-
 VALID_SHA256 = "a" * 64
 
 
