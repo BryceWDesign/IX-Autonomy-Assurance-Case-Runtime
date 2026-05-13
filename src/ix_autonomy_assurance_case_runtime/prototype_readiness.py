@@ -12,7 +12,10 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-from ix_autonomy_assurance_case_runtime.contracts import ContractValueError, RuntimeStrEnum
+from ix_autonomy_assurance_case_runtime.contracts import (
+    ContractValueError,
+    RuntimeStrEnum,
+)
 from ix_autonomy_assurance_case_runtime.prototype_target import (
     PrototypeCapabilityTarget,
     assess_serious_prototype_maturity,
@@ -177,10 +180,14 @@ class PrototypeReadinessGate:
     def __init__(self, targets: Iterable[PrototypeCapabilityTarget] | None = None) -> None:
         """Create a gate with canonical targets unless explicit targets are supplied."""
 
-        self._targets = tuple(targets) if targets is not None else build_serious_prototype_targets()
+        self._targets = (
+            tuple(targets) if targets is not None else build_serious_prototype_targets()
+        )
         self._target_by_id = {target.capability_id: target for target in self._targets}
         if len(self._target_by_id) != len(self._targets):
-            raise ContractValueError("Prototype readiness targets must have unique capability IDs.")
+            raise ContractValueError(
+                "Prototype readiness targets must have unique capability IDs."
+            )
 
     def evaluate(
         self,
@@ -190,10 +197,25 @@ class PrototypeReadinessGate:
         """Evaluate completed capabilities against the requested claim level."""
 
         assessment = assess_serious_prototype_maturity(completed_capability_ids)
+        required_remaining_capability_ids = tuple(
+            capability_id
+            for capability_id in assessment.remaining_capability_ids
+            if self._target_by_id[capability_id].required_for_serious_prototype
+        )
         findings = list(
             self._build_missing_capability_findings(
                 requested_claim_level=requested_claim_level,
-                remaining_capability_ids=assessment.remaining_capability_ids,
+                remaining_capability_ids=required_remaining_capability_ids,
+            )
+        )
+        findings.extend(
+            self._build_unexpected_capability_findings(
+                assessment.unexpected_capability_ids,
+            )
+        )
+        findings.extend(
+            self._build_duplicate_capability_findings(
+                assessment.duplicate_capability_ids,
             )
         )
 
@@ -237,6 +259,44 @@ class PrototypeReadinessGate:
             completed_capability_ids=assessment.completed_capability_ids,
             remaining_capability_ids=assessment.remaining_capability_ids,
             findings=tuple(findings),
+        )
+
+    @staticmethod
+    def _build_unexpected_capability_findings(
+        unexpected_capability_ids: tuple[str, ...],
+    ) -> tuple[PrototypeReadinessFinding, ...]:
+        """Build warning findings for completed IDs outside the target model."""
+
+        return tuple(
+            PrototypeReadinessFinding(
+                finding_id=f"unexpected-{capability_id}",
+                severity=PrototypeFindingSeverity.WARNING,
+                message=(
+                    f"Completed capability {capability_id!r} is not part of the "
+                    "prototype maturity target model and does not increase maturity."
+                ),
+                capability_id=capability_id,
+            )
+            for capability_id in unexpected_capability_ids
+        )
+
+    @staticmethod
+    def _build_duplicate_capability_findings(
+        duplicate_capability_ids: tuple[str, ...],
+    ) -> tuple[PrototypeReadinessFinding, ...]:
+        """Build warning findings for duplicate completed IDs."""
+
+        return tuple(
+            PrototypeReadinessFinding(
+                finding_id=f"duplicate-{capability_id}",
+                severity=PrototypeFindingSeverity.WARNING,
+                message=(
+                    f"Completed capability {capability_id!r} was supplied more than "
+                    "once and is counted only once."
+                ),
+                capability_id=capability_id,
+            )
+            for capability_id in duplicate_capability_ids
         )
 
     def _build_missing_capability_findings(
