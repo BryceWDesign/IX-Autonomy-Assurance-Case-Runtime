@@ -13,7 +13,6 @@ from ix_autonomy_assurance_case_runtime import (
 )
 from ix_autonomy_assurance_case_runtime.contracts import ContractValueError
 
-
 ORIGINAL_SERIOUS_PROTOTYPE_CAPABILITIES = (
     "registry-layer",
     "policy-pack-engine",
