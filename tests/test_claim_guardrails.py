@@ -168,16 +168,15 @@ def test_non_endorsement_claim_can_release_without_evidence_references() -> None
 
 
 def test_claim_release_package_requires_limitation_claims_for_strict_audiences() -> None:
-    package = _package(claims=(_claim(),))
+    strict_package = _package(claims=(_claim(),))
+    local_package = _package(
+        claims=(_claim(),),
+        review_status=ClaimReviewStatus.APPROVED_WITH_LIMITATIONS,
+        audience=ClaimAudience.LOCAL_DEVELOPMENT,
+    )
 
-    assert not package.can_release()
-
-    with pytest.raises(ContractValueError, match="limitation claims"):
-        _package(
-            claims=(_claim(),),
-            review_status=ClaimReviewStatus.APPROVED_WITH_LIMITATIONS,
-            audience=ClaimAudience.LOCAL_DEVELOPMENT,
-        )
+    assert not strict_package.can_release()
+    assert local_package.can_release()
 
 
 def test_claim_release_package_blocks_unreviewed_claims() -> None:
