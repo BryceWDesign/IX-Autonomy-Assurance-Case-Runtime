@@ -24,8 +24,8 @@ from ix_autonomy_assurance_case_runtime.scenario_campaign_readiness import (
     ScenarioCampaignReadinessFindingSource,
 )
 from ix_autonomy_assurance_case_runtime.scenario_campaign_runner import (
-    ScenarioCampaignRunner,
     ScenarioCampaignRunInput,
+    ScenarioCampaignRunner,
     ScenarioCampaignRunReport,
 )
 from ix_autonomy_assurance_case_runtime.scenario_campaigns import (
