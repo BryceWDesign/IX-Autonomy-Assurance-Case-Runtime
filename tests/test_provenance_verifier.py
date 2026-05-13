@@ -25,7 +25,6 @@ from ix_autonomy_assurance_case_runtime.provenance_verifier import (
     ProvenanceVerificationPolicy,
 )
 
-
 VALID_SHA256 = "a" * 64
 
 
@@ -143,9 +142,10 @@ def test_provenance_manifest_verifier_fails_unsigned_artifact_under_default_poli
     assert not report.supports_signed_provenance_claim()
     assert report.signed_artifact_count == 0
     assert report.blocker_count == 3
-    assert {finding.finding_id for finding in report.findings_for_artifact(
-        "ev-framework-crosswalk-001"
-    )} >= {
+    assert {
+        finding.finding_id
+        for finding in report.findings_for_artifact("ev-framework-crosswalk-001")
+    } >= {
         "artifact-ev-framework-crosswalk-001-has-no-signature",
         "artifact-ev-framework-crosswalk-001-has-no-attestation",
     }
