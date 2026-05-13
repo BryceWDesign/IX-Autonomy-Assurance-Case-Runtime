@@ -210,11 +210,13 @@ def _incident(
 def _trigger(
     *,
     state: RevalidationTriggerState = RevalidationTriggerState.SATISFIED,
+    source_record_id: str = "drift-nav-001",
+    source: RevalidationTriggerSource = RevalidationTriggerSource.DRIFT_RECORD,
 ) -> RevalidationTrigger:
     return RevalidationTrigger(
         trigger_id="trigger-nav-001",
-        source=RevalidationTriggerSource.DRIFT_RECORD,
-        source_record_id="drift-nav-001",
+        source=source,
+        source_record_id=source_record_id,
         state=state,
         created_at_utc="2026-05-12T12:15:00Z",
         reason="Drift watch record was reviewed against the campaign evidence.",
@@ -313,7 +315,7 @@ def test_monitoring_readiness_feeds_prototype_claim_gate() -> None:
     )
 
     assert prototype_report.decision is PrototypeReadinessDecision.BLOCK
-    assert prototype_report.achieved_percent == 72
+    assert prototype_report.achieved_percent == 71
     assert prototype_report.completed_capability_ids == (
         "registry-layer",
         "policy-pack-engine",
@@ -385,7 +387,15 @@ def test_monitoring_readiness_warns_when_drift_history_is_missing() -> None:
             _bundle("ev-incident-nav"),
             _bundle("ev-trigger-nav"),
         )
-    ).evaluate(_trail(include_drift=False, trigger=_trigger(source_record_id="snapshot-nav-001")))
+    ).evaluate(
+        _trail(
+            include_drift=False,
+            trigger=_trigger(
+                source_record_id="snapshot-nav-001",
+                source=RevalidationTriggerSource.MONITORING_SNAPSHOT,
+            ),
+        )
+    )
 
     assert report.decision is MonitoringReadinessDecision.LIMITED
     assert any(
