@@ -19,7 +19,6 @@ from dataclasses import dataclass
 from ix_autonomy_assurance_case_runtime.contracts import ContractValueError, RuntimeStrEnum
 from ix_autonomy_assurance_case_runtime.provenance import (
     ArtifactDigest,
-    ProvenanceArtifactType,
     ProvenanceAttestation,
     ProvenanceManifest,
     ProvenanceSignature,
@@ -147,7 +146,8 @@ class ProvenanceVerificationFinding:
             )
         if self.attestation_id is not None and not self.attestation_id.strip():
             raise ContractValueError(
-                f"Provenance verification finding {self.finding_id!r} has a blank attestation ID."
+                f"Provenance verification finding {self.finding_id!r} has a blank "
+                "attestation ID."
             )
 
 
