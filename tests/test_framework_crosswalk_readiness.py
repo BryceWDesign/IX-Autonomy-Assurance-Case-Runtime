@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from ix_autonomy_assurance_case_runtime.contracts import ContractValueError
-from ix_autonomy_assurance_case_runtime.evidence import EvidenceBundle, EvidenceRecord, EvidenceStatus
+from ix_autonomy_assurance_case_runtime.contracts import ContractValueError, EvidenceStatus
+from ix_autonomy_assurance_case_runtime.evidence import EvidenceBundle, EvidenceRecord
 from ix_autonomy_assurance_case_runtime.framework_crosswalk import (
     AssuranceArtifactType,
     AssuranceFramework,
