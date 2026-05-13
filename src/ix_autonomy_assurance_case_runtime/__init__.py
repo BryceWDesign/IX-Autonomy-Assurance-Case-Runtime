@@ -15,6 +15,31 @@ from ix_autonomy_assurance_case_runtime.assurance_case import (
     Mitigation,
     VerificationCriterion,
 )
+from ix_autonomy_assurance_case_runtime.assurance_dossier import (
+    AssuranceDossierManifest,
+    AssuranceDossierStatus,
+    DossierArtifactKind,
+    DossierArtifactReference,
+    DossierEvidenceReference,
+    DossierTraceClosureStatus,
+    DossierTraceThread,
+)
+from ix_autonomy_assurance_case_runtime.assurance_dossier_readiness import (
+    ASSURANCE_DOSSIER_CAPABILITY_ID,
+    AssuranceDossierLayerReadinessEvaluator,
+    AssuranceDossierLayerReadinessReport,
+    AssuranceDossierReadinessDecision,
+    AssuranceDossierReadinessFinding,
+    AssuranceDossierReadinessFindingSeverity,
+    AssuranceDossierReadinessFindingSource,
+)
+from ix_autonomy_assurance_case_runtime.assurance_dossier_validation import (
+    AssuranceDossierValidationFinding,
+    AssuranceDossierValidationFindingSeverity,
+    AssuranceDossierValidationFindingSource,
+    AssuranceDossierValidationReport,
+    AssuranceDossierValidator,
+)
 from ix_autonomy_assurance_case_runtime.authority import (
     AuthorityController,
     AuthorityDecisionResult,
@@ -427,6 +452,7 @@ from ix_autonomy_assurance_case_runtime.verification import (
 
 __all__ = [
     "PROJECT_NAME",
+    "ASSURANCE_DOSSIER_CAPABILITY_ID",
     "AcceptanceCriterion",
     "ArtifactDigest",
     "AssuranceArtifactType",
@@ -434,6 +460,19 @@ __all__ = [
     "AssuranceCaseStatus",
     "AssuranceCaseValidationReport",
     "AssuranceClaim",
+    "AssuranceDossierLayerReadinessEvaluator",
+    "AssuranceDossierLayerReadinessReport",
+    "AssuranceDossierManifest",
+    "AssuranceDossierReadinessDecision",
+    "AssuranceDossierReadinessFinding",
+    "AssuranceDossierReadinessFindingSeverity",
+    "AssuranceDossierReadinessFindingSource",
+    "AssuranceDossierStatus",
+    "AssuranceDossierValidationFinding",
+    "AssuranceDossierValidationFindingSeverity",
+    "AssuranceDossierValidationFindingSource",
+    "AssuranceDossierValidationReport",
+    "AssuranceDossierValidator",
     "AssuranceFramework",
     "AssuranceModelError",
     "AssuranceReport",
@@ -465,6 +504,11 @@ __all__ = [
     "DegradationRuntimeError",
     "DegradationSignal",
     "DeploymentEnvironment",
+    "DossierArtifactKind",
+    "DossierArtifactReference",
+    "DossierEvidenceReference",
+    "DossierTraceClosureStatus",
+    "DossierTraceThread",
     "DriftRecord",
     "DriftStatus",
     "EXPORT_PACKAGE_CAPABILITY_ID",
