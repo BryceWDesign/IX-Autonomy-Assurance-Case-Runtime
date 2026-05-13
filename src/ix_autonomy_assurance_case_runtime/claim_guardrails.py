@@ -1,465 +1,575 @@
-"""Claim guardrail domain records.
+"""Claim guardrails for bounded prototype and assurance statements.
 
-The serious prototype target needs explicit controls over what the project may
-claim publicly or inside review packages. These records model evidence-backed
-claim statements, audience/risk posture, prohibited phrase rules, review status,
-and release packages so the repo can keep prototype language bounded.
+The runtime can generate many useful local reports, but those reports must not be
+allowed to imply certification, operational deployment readiness, authority to
+operate, procurement acceptance, agency endorsement, or field suitability.
 
-This module is local prototype infrastructure only. It does not claim
-certification, authority to operate, deployment approval, official endorsement,
-or agency acceptance.
+This module provides deterministic claim-scope records and validators so exports,
+reports, dossiers, and public summaries can be checked before publication. The
+guardrails are intentionally conservative: a claim can be useful and still be
+blocked if it overstates what the local prototype evidence can prove.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from collections.abc import Iterable
+from dataclasses import dataclass
 
+from ix_autonomy_assurance_case_runtime.assurance_dossier import AssuranceDossier
 from ix_autonomy_assurance_case_runtime.contracts import ContractValueError, RuntimeStrEnum
+from ix_autonomy_assurance_case_runtime.prototype_readiness import (
+    PrototypeClaimLevel,
+    PrototypeReadinessDecision,
+    PrototypeReadinessGate,
+    PrototypeReadinessReport,
+)
 
 
-def _require_identifier(value: str, field_name: str) -> str:
-    """Validate and return a stable claim-guardrail identifier."""
+def _require_identifier(value: str, field_name: str) -> None:
+    """Validate a stable guardrail identifier."""
 
-    normalized = value.strip()
-    if not normalized:
+    if not value.strip():
         raise ContractValueError(f"{field_name} must not be blank.")
-    if normalized != value:
+    if value != value.strip():
         raise ContractValueError(f"{field_name} must not contain edge whitespace.")
-    if " " in normalized:
+    if " " in value:
         raise ContractValueError(f"{field_name} must not contain spaces.")
-    return normalized
 
 
-def _require_text(value: str, field_name: str) -> str:
-    """Validate and return nonblank claim-guardrail text."""
+def _require_text(value: str, field_name: str) -> None:
+    """Validate nonblank claim text."""
 
-    normalized = value.strip()
-    if not normalized:
+    if not value.strip():
         raise ContractValueError(f"{field_name} must not be blank.")
-    return normalized
 
 
-def _normalize_identifier_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, ...]:
-    """Validate identifier tuples and reject duplicates."""
+class ClaimScope(RuntimeStrEnum):
+    """Declared scope of a claim."""
 
-    normalized = tuple(_require_identifier(value, field_name) for value in values)
-    if len(normalized) != len(set(normalized)):
-        raise ContractValueError(f"{field_name} must not contain duplicate identifiers.")
-    return normalized
+    LOCAL_PROTOTYPE = "local-prototype"
+    EVALUATION_ARTIFACT = "evaluation-artifact"
+    ENGINEERING_DEMONSTRATION = "engineering-demonstration"
+    OPERATIONAL_SYSTEM = "operational-system"
+    CERTIFICATION = "certification"
+    AUTHORITY_TO_OPERATE = "authority-to-operate"
+    PROCUREMENT_ACCEPTANCE = "procurement-acceptance"
+    AGENCY_ENDORSEMENT = "agency-endorsement"
 
-
-def _normalize_text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, ...]:
-    """Validate text tuples and reject duplicates."""
-
-    normalized = tuple(_require_text(value, field_name) for value in values)
-    if len(normalized) != len(set(normalized)):
-        raise ContractValueError(f"{field_name} must not contain duplicate values.")
-    return normalized
-
-
-def _parse_utc_timestamp(value: str, field_name: str) -> datetime:
-    """Parse an ISO-8601 timestamp and normalize it to UTC."""
-
-    normalized = value[:-1] + "+00:00" if value.endswith("Z") else value
-    try:
-        parsed = datetime.fromisoformat(normalized)
-    except ValueError as exc:
-        raise ContractValueError(f"{field_name} must be an ISO-8601 timestamp.") from exc
-    if parsed.tzinfo is None:
-        raise ContractValueError(f"{field_name} must include a timezone.")
-    return parsed.astimezone(UTC)
-
-
-class ClaimAudience(RuntimeStrEnum):
-    """Intended audience for a claim package."""
-
-    LOCAL_DEVELOPMENT = "local_development"
-    OPEN_SOURCE_README = "open_source_readme"
-    TECHNICAL_REVIEW = "technical_review"
-    FEDERAL_EVALUATION = "federal_evaluation"
-    INTERNAL_ASSURANCE = "internal_assurance"
-
-    def requires_strict_language_review(self) -> bool:
-        """Return whether the audience requires strict public-claim review."""
+    def is_allowed_for_local_prototype(self) -> bool:
+        """Return whether this scope is allowed for local prototype statements."""
 
         return self in {
-            ClaimAudience.OPEN_SOURCE_README,
-            ClaimAudience.TECHNICAL_REVIEW,
-            ClaimAudience.FEDERAL_EVALUATION,
+            ClaimScope.LOCAL_PROTOTYPE,
+            ClaimScope.EVALUATION_ARTIFACT,
+            ClaimScope.ENGINEERING_DEMONSTRATION,
         }
 
 
-class ClaimStatementType(RuntimeStrEnum):
-    """Type of claim being made."""
+class ClaimReviewDecision(RuntimeStrEnum):
+    """Decision emitted by the claim guardrail validator."""
 
-    CAPABILITY = "capability"
-    LIMITATION = "limitation"
-    MATURITY = "maturity"
-    EVIDENCE = "evidence"
-    SAFETY_BOUNDARY = "safety_boundary"
-    NON_ENDORSEMENT = "non_endorsement"
+    ACCEPT = "accept"
+    REVISE = "revise"
+    BLOCK = "block"
 
-    def requires_evidence(self) -> bool:
-        """Return whether this claim type requires evidence references."""
+    def is_publishable(self) -> bool:
+        """Return whether a claim can be published without revision."""
 
-        return self is not ClaimStatementType.NON_ENDORSEMENT
+        return self is ClaimReviewDecision.ACCEPT
 
+    def blocks_publication(self) -> bool:
+        """Return whether a claim must not be published."""
 
-class ClaimRiskLevel(RuntimeStrEnum):
-    """Risk level for a claim statement."""
-
-    LOW = "low"
-    MODERATE = "moderate"
-    HIGH = "high"
-    PROHIBITED = "prohibited"
-
-    def blocks_release(self) -> bool:
-        """Return whether this risk level blocks release."""
-
-        return self is ClaimRiskLevel.PROHIBITED
-
-    def requires_reviewer_signoff(self) -> bool:
-        """Return whether this risk level requires explicit reviewer signoff."""
-
-        return self in {ClaimRiskLevel.MODERATE, ClaimRiskLevel.HIGH}
+        return self is ClaimReviewDecision.BLOCK
 
 
-class ClaimEvidenceStrength(RuntimeStrEnum):
-    """Evidence strength attached to a claim statement."""
+class ClaimGuardrailFindingSeverity(RuntimeStrEnum):
+    """Severity for claim guardrail findings."""
 
-    NONE = "none"
-    DESCRIBED = "described"
-    TESTED = "tested"
-    TRACE_CLOSED = "trace_closed"
-    EXPORTED = "exported"
+    INFO = "info"
+    WARNING = "warning"
+    BLOCKER = "blocker"
 
-    @property
-    def rank(self) -> int:
-        """Return an ordinal strength rank."""
+    def blocks_publication(self) -> bool:
+        """Return whether this finding blocks claim publication."""
 
-        ranks = {
-            ClaimEvidenceStrength.NONE: 0,
-            ClaimEvidenceStrength.DESCRIBED: 1,
-            ClaimEvidenceStrength.TESTED: 2,
-            ClaimEvidenceStrength.TRACE_CLOSED: 3,
-            ClaimEvidenceStrength.EXPORTED: 4,
-        }
-        return ranks[self]
-
-    def supports_public_claim(self) -> bool:
-        """Return whether the evidence strength can support a public claim."""
-
-        return self.rank >= ClaimEvidenceStrength.TESTED.rank
+        return self is ClaimGuardrailFindingSeverity.BLOCKER
 
 
-class ClaimReviewStatus(RuntimeStrEnum):
-    """Review state for a claim statement or package."""
+class ClaimGuardrailFindingKind(RuntimeStrEnum):
+    """Kind of guardrail finding."""
 
-    DRAFT = "draft"
-    IN_REVIEW = "in_review"
-    APPROVED = "approved"
-    APPROVED_WITH_LIMITATIONS = "approved_with_limitations"
-    REJECTED = "rejected"
+    SCOPE_ALIGNMENT = "scope-alignment"
+    PROHIBITED_CLAIM = "prohibited-claim"
+    EVIDENCE_ALIGNMENT = "evidence-alignment"
+    REQUIRED_DISCLAIMER = "required-disclaimer"
+    TRACEABILITY = "traceability"
+    READINESS = "readiness"
 
-    def supports_release(self) -> bool:
-        """Return whether this review state can support release."""
 
-        return self in {
-            ClaimReviewStatus.APPROVED,
-            ClaimReviewStatus.APPROVED_WITH_LIMITATIONS,
-        }
+class ClaimEvidenceReferenceKind(RuntimeStrEnum):
+    """Supported evidence reference types for claim review."""
 
-    def requires_limitations(self) -> bool:
-        """Return whether the status requires explicit limitation text."""
-
-        return self is ClaimReviewStatus.APPROVED_WITH_LIMITATIONS
+    DOSSIER = "dossier"
+    EXPORT_PACKAGE = "export-package"
+    READINESS_REPORT = "readiness-report"
+    LEDGER = "ledger"
+    HUMAN_REVIEW = "human-review"
+    PROVENANCE = "provenance"
+    OTHER = "other"
 
 
 @dataclass(frozen=True, slots=True)
 class ClaimEvidenceReference:
-    """Evidence reference supporting a claim statement."""
+    """Evidence artifact cited by a bounded claim."""
 
     reference_id: str
-    evidence_bundle_id: str
-    artifact_ids: tuple[str, ...]
-    capability_ids: tuple[str, ...]
-    rationale: str = "Evidence supports the bounded claim statement."
+    kind: ClaimEvidenceReferenceKind
+    summary: str
+    artifact_uri: str | None = None
 
     def __post_init__(self) -> None:
-        """Validate claim evidence reference fields."""
+        """Validate evidence reference fields."""
 
-        object.__setattr__(
-            self,
-            "reference_id",
-            _require_identifier(self.reference_id, "reference_id"),
-        )
-        object.__setattr__(
-            self,
-            "evidence_bundle_id",
-            _require_identifier(self.evidence_bundle_id, "evidence_bundle_id"),
-        )
-        object.__setattr__(
-            self,
-            "artifact_ids",
-            _normalize_identifier_tuple(self.artifact_ids, "artifact_ids"),
-        )
-        object.__setattr__(
-            self,
-            "capability_ids",
-            _normalize_identifier_tuple(self.capability_ids, "capability_ids"),
-        )
-        object.__setattr__(self, "rationale", _require_text(self.rationale, "rationale"))
-        if not self.artifact_ids:
-            raise ContractValueError("claim evidence references require artifact_ids.")
-        if not self.capability_ids:
-            raise ContractValueError("claim evidence references require capability_ids.")
+        _require_identifier(self.reference_id, "claim evidence reference_id")
+        _require_text(self.summary, "claim evidence summary")
+        if self.artifact_uri is not None:
+            _require_text(self.artifact_uri, "claim evidence artifact_uri")
 
 
 @dataclass(frozen=True, slots=True)
-class ClaimProhibitedPhraseRule:
-    """Phrase rule used to block or warn about overclaim language."""
-
-    rule_id: str
-    phrase: str
-    rationale: str
-    blocks_release: bool = True
-    replacement_guidance: str = "Replace with bounded prototype language."
-    allowed_context_markers: tuple[str, ...] = field(default_factory=tuple)
-
-    def __post_init__(self) -> None:
-        """Validate prohibited phrase rule fields."""
-
-        object.__setattr__(self, "rule_id", _require_identifier(self.rule_id, "rule_id"))
-        object.__setattr__(self, "phrase", _require_text(self.phrase, "phrase"))
-        object.__setattr__(self, "rationale", _require_text(self.rationale, "rationale"))
-        object.__setattr__(
-            self,
-            "replacement_guidance",
-            _require_text(self.replacement_guidance, "replacement_guidance"),
-        )
-        object.__setattr__(
-            self,
-            "allowed_context_markers",
-            _normalize_text_tuple(self.allowed_context_markers, "allowed_context_markers"),
-        )
-
-    def matches(self, text: str) -> bool:
-        """Return whether this rule phrase appears in text."""
-
-        return self.phrase.lower() in text.lower()
-
-    def is_allowed_context(self, text: str) -> bool:
-        """Return whether text includes an allowed context marker."""
-
-        lowered = text.lower()
-        return any(marker.lower() in lowered for marker in self.allowed_context_markers)
-
-
-@dataclass(frozen=True, slots=True)
-class EvidenceBackedClaim:
-    """One bounded claim statement with evidence and review posture."""
+class BoundedClaim:
+    """Claim proposed for a report, export, dossier, or public summary."""
 
     claim_id: str
-    statement_type: ClaimStatementType
-    risk_level: ClaimRiskLevel
-    evidence_strength: ClaimEvidenceStrength
-    review_status: ClaimReviewStatus
     text: str
-    evidence_reference_ids: tuple[str, ...]
-    limitation_text: str | None = None
-    reviewer_ids: tuple[str, ...] = field(default_factory=tuple)
-    related_capability_ids: tuple[str, ...] = field(default_factory=tuple)
-    related_artifact_ids: tuple[str, ...] = field(default_factory=tuple)
-
-    def __post_init__(self) -> None:
-        """Validate evidence-backed claim fields."""
-
-        object.__setattr__(self, "claim_id", _require_identifier(self.claim_id, "claim_id"))
-        object.__setattr__(self, "text", _require_text(self.text, "text"))
-        object.__setattr__(
-            self,
-            "evidence_reference_ids",
-            _normalize_identifier_tuple(
-                self.evidence_reference_ids,
-                "evidence_reference_ids",
-            ),
-        )
-        object.__setattr__(
-            self,
-            "reviewer_ids",
-            _normalize_identifier_tuple(self.reviewer_ids, "reviewer_ids"),
-        )
-        object.__setattr__(
-            self,
-            "related_capability_ids",
-            _normalize_identifier_tuple(
-                self.related_capability_ids,
-                "related_capability_ids",
-            ),
-        )
-        object.__setattr__(
-            self,
-            "related_artifact_ids",
-            _normalize_identifier_tuple(self.related_artifact_ids, "related_artifact_ids"),
-        )
-        if self.limitation_text is not None:
-            object.__setattr__(
-                self,
-                "limitation_text",
-                _require_text(self.limitation_text, "limitation_text"),
-            )
-        if self.statement_type.requires_evidence() and not self.evidence_reference_ids:
-            raise ContractValueError("evidence-backed claims require evidence_reference_ids.")
-        if self.risk_level.requires_reviewer_signoff() and not self.reviewer_ids:
-            raise ContractValueError("moderate or high risk claims require reviewer_ids.")
-        if self.review_status.requires_limitations() and self.limitation_text is None:
-            raise ContractValueError(
-                "approved_with_limitations claims require limitation_text."
-            )
-        if self.evidence_strength is ClaimEvidenceStrength.NONE and self.evidence_reference_ids:
-            raise ContractValueError(
-                "claims with evidence references cannot use evidence strength none."
-            )
-
-    def can_be_released(self) -> bool:
-        """Return whether the claim is structurally releaseable."""
-
-        return (
-            self.review_status.supports_release()
-            and not self.risk_level.blocks_release()
-            and (
-                not self.statement_type.requires_evidence()
-                or self.evidence_strength.supports_public_claim()
-            )
-        )
-
-    def is_limitation_claim(self) -> bool:
-        """Return whether this claim is a limitation or non-endorsement statement."""
-
-        return self.statement_type in {
-            ClaimStatementType.LIMITATION,
-            ClaimStatementType.NON_ENDORSEMENT,
-        }
-
-
-@dataclass(frozen=True, slots=True)
-class ClaimReleasePackage:
-    """Collection of claims prepared for a specific audience."""
-
-    package_id: str
-    audience: ClaimAudience
-    review_status: ClaimReviewStatus
-    created_at_utc: str
-    claims: tuple[EvidenceBackedClaim, ...]
+    scope: ClaimScope
+    requested_claim_level: PrototypeClaimLevel
     evidence_references: tuple[ClaimEvidenceReference, ...]
-    prohibited_phrase_rules: tuple[ClaimProhibitedPhraseRule, ...]
-    release_notes: tuple[str, ...] = field(default_factory=tuple)
-    disclaimer: str = (
-        "Local prototype claim package only; not a certification, authority-to-operate "
-        "decision, deployment approval, official endorsement, or agency acceptance."
+    required_disclaimers: tuple[str, ...] = ()
+    prohibited_terms: tuple[str, ...] = (
+        "certified",
+        "certification",
+        "authority to operate",
+        "ato",
+        "deployment ready",
+        "operationally ready",
+        "field ready",
+        "procurement ready",
+        "procurement accepted",
+        "agency approved",
+        "agency accepted",
+        "official endorsement",
+        "endorsed by",
+        "approved by",
+        "accepted by",
     )
 
     def __post_init__(self) -> None:
-        """Validate claim release package fields."""
+        """Validate bounded claim fields."""
 
-        object.__setattr__(
-            self,
-            "package_id",
-            _require_identifier(self.package_id, "package_id"),
-        )
-        _parse_utc_timestamp(self.created_at_utc, "created_at_utc")
-        object.__setattr__(
-            self,
-            "release_notes",
-            _normalize_text_tuple(self.release_notes, "release_notes"),
-        )
-        object.__setattr__(self, "disclaimer", _require_text(self.disclaimer, "disclaimer"))
-        if not self.claims:
-            raise ContractValueError("claim release packages require claims.")
-        if not self.evidence_references:
-            raise ContractValueError("claim release packages require evidence_references.")
-        if not self.prohibited_phrase_rules:
-            raise ContractValueError("claim release packages require prohibited_phrase_rules.")
-        _reject_duplicate_ids(
-            tuple(claim.claim_id for claim in self.claims),
-            "claim IDs",
-        )
-        _reject_duplicate_ids(
-            tuple(reference.reference_id for reference in self.evidence_references),
-            "claim evidence reference IDs",
-        )
-        _reject_duplicate_ids(
-            tuple(rule.rule_id for rule in self.prohibited_phrase_rules),
-            "claim prohibited phrase rule IDs",
-        )
-        if self.review_status.requires_limitations() and not self.limitation_claim_ids():
+        _require_identifier(self.claim_id, "claim_id")
+        _require_text(self.text, "claim text")
+        for disclaimer in self.required_disclaimers:
+            _require_text(disclaimer, "required disclaimer")
+        for term in self.prohibited_terms:
+            _require_text(term, "prohibited term")
+        reference_ids = [reference.reference_id for reference in self.evidence_references]
+        if len(reference_ids) != len(set(reference_ids)):
             raise ContractValueError(
-                "approved_with_limitations claim packages require limitation claims."
+                f"Claim {self.claim_id!r} has duplicate evidence references."
             )
 
-    def claim_ids(self) -> tuple[str, ...]:
-        """Return claim IDs in package order."""
+    def normalized_text(self) -> str:
+        """Return normalized lowercase claim text for deterministic scanning."""
 
-        return tuple(claim.claim_id for claim in self.claims)
+        return " ".join(self.text.lower().split())
 
-    def releasable_claim_ids(self) -> tuple[str, ...]:
-        """Return claim IDs that are structurally releaseable."""
+    def cited_reference_ids(self) -> tuple[str, ...]:
+        """Return cited evidence reference IDs."""
 
-        return tuple(claim.claim_id for claim in self.claims if claim.can_be_released())
+        return tuple(reference.reference_id for reference in self.evidence_references)
 
-    def blocked_claim_ids(self) -> tuple[str, ...]:
-        """Return claim IDs that are not structurally releaseable."""
+    def cites_reference_kind(self, kind: ClaimEvidenceReferenceKind) -> bool:
+        """Return whether the claim cites an evidence reference of the requested kind."""
 
-        return tuple(claim.claim_id for claim in self.claims if not claim.can_be_released())
+        return any(reference.kind is kind for reference in self.evidence_references)
 
-    def limitation_claim_ids(self) -> tuple[str, ...]:
-        """Return claim IDs that state limitations or non-endorsement posture."""
 
-        return tuple(claim.claim_id for claim in self.claims if claim.is_limitation_claim())
+@dataclass(frozen=True, slots=True)
+class ClaimGuardrailFinding:
+    """One claim-guardrail finding."""
 
-    def required_evidence_reference_ids(self) -> tuple[str, ...]:
-        """Return unique claim evidence reference IDs required by claims."""
+    finding_id: str
+    severity: ClaimGuardrailFindingSeverity
+    kind: ClaimGuardrailFindingKind
+    message: str
+    claim_id: str
+    evidence_reference_id: str | None = None
+    prohibited_term: str | None = None
 
-        reference_ids: list[str] = []
-        for claim in self.claims:
-            reference_ids.extend(claim.evidence_reference_ids)
-        return tuple(dict.fromkeys(reference_ids))
+    def __post_init__(self) -> None:
+        """Validate claim guardrail finding fields."""
 
-    def required_evidence_bundle_ids(self) -> tuple[str, ...]:
-        """Return unique evidence bundle IDs referenced by this package."""
-
-        return tuple(
-            dict.fromkeys(
-                reference.evidence_bundle_id for reference in self.evidence_references
+        _require_identifier(self.finding_id, "claim guardrail finding_id")
+        _require_identifier(self.claim_id, "claim guardrail claim_id")
+        _require_text(self.message, "claim guardrail finding message")
+        if self.evidence_reference_id is not None:
+            _require_identifier(
+                self.evidence_reference_id,
+                "claim guardrail evidence_reference_id",
             )
+        if self.prohibited_term is not None:
+            _require_text(self.prohibited_term, "claim guardrail prohibited_term")
+
+
+@dataclass(frozen=True, slots=True)
+class ClaimGuardrailReport:
+    """Guardrail review report for one bounded claim."""
+
+    claim_id: str
+    decision: ClaimReviewDecision
+    findings: tuple[ClaimGuardrailFinding, ...]
+    readiness_report: PrototypeReadinessReport | None = None
+
+    @property
+    def blocker_count(self) -> int:
+        """Return blocker finding count."""
+
+        return sum(1 for finding in self.findings if finding.severity.blocks_publication())
+
+    @property
+    def warning_count(self) -> int:
+        """Return warning finding count."""
+
+        return sum(
+            1
+            for finding in self.findings
+            if finding.severity is ClaimGuardrailFindingSeverity.WARNING
         )
 
-    def prohibited_rule_ids_for_text(self, text: str) -> tuple[str, ...]:
-        """Return prohibited phrase rule IDs that match text outside allowed context."""
+    def is_publishable(self) -> bool:
+        """Return whether the claim can be published as written."""
 
-        return tuple(
-            rule.rule_id
-            for rule in self.prohibited_phrase_rules
-            if rule.matches(text) and not rule.is_allowed_context(text)
-        )
+        return self.decision.is_publishable()
 
-    def can_release(self) -> bool:
-        """Return whether the claim package is structurally releaseable."""
+    def findings_by_kind(
+        self,
+        kind: ClaimGuardrailFindingKind,
+    ) -> tuple[ClaimGuardrailFinding, ...]:
+        """Return findings of a specific kind."""
+
+        return tuple(finding for finding in self.findings if finding.kind is kind)
+
+    def summary(self) -> str:
+        """Return deterministic claim guardrail summary."""
 
         return (
-            self.review_status.supports_release()
-            and not self.blocked_claim_ids()
-            and not any(self.prohibited_rule_ids_for_text(claim.text) for claim in self.claims)
-            and (
-                not self.audience.requires_strict_language_review()
-                or bool(self.limitation_claim_ids())
-            )
+            f"claim-guardrail: {self.claim_id} {self.decision.value} "
+            f"({self.blocker_count} blocker(s), {self.warning_count} warning(s))"
         )
 
 
-def _reject_duplicate_ids(values: tuple[str, ...], field_name: str) -> None:
-    """Reject duplicate identifier tuples."""
+@dataclass(frozen=True, slots=True)
+class ClaimGuardrailBatchReport:
+    """Batch guardrail review report for multiple claims."""
 
-    if len(values) != len(set(values)):
-        raise ContractValueError(f"{field_name} must not contain duplicates.")
+    reports: tuple[ClaimGuardrailReport, ...]
+
+    def __post_init__(self) -> None:
+        """Validate duplicate claim report IDs."""
+
+        claim_ids = [report.claim_id for report in self.reports]
+        if len(claim_ids) != len(set(claim_ids)):
+            raise ContractValueError("Duplicate claim IDs in claim guardrail batch report.")
+
+    @property
+    def blocker_count(self) -> int:
+        """Return total blocker count."""
+
+        return sum(report.blocker_count for report in self.reports)
+
+    @property
+    def warning_count(self) -> int:
+        """Return total warning count."""
+
+        return sum(report.warning_count for report in self.reports)
+
+    def is_publishable(self) -> bool:
+        """Return whether all claims can be published as written."""
+
+        return all(report.is_publishable() for report in self.reports)
+
+    def blocked_claim_ids(self) -> tuple[str, ...]:
+        """Return claim IDs blocked by guardrails."""
+
+        return tuple(
+            report.claim_id
+            for report in self.reports
+            if report.decision.blocks_publication()
+        )
+
+    def summary(self) -> str:
+        """Return deterministic batch summary."""
+
+        return (
+            f"claim-guardrail-batch: {len(self.reports)} claim(s), "
+            f"{self.blocker_count} blocker(s), {self.warning_count} warning(s)"
+        )
+
+
+class ClaimGuardrailValidator:
+    """Validate bounded claims against local prototype guardrails."""
+
+    def __init__(
+        self,
+        *,
+        readiness_gate: PrototypeReadinessGate | None = None,
+        required_local_disclaimer: str = (
+            "local prototype only; not certification, authority to operate, deployment "
+            "readiness, procurement acceptance, agency acceptance, or official endorsement"
+        ),
+    ) -> None:
+        """Create a claim guardrail validator."""
+
+        self._readiness_gate = readiness_gate or PrototypeReadinessGate()
+        self._required_local_disclaimer = required_local_disclaimer
+
+    def review_claim(
+        self,
+        claim: BoundedClaim,
+        *,
+        completed_capability_ids: Iterable[str],
+    ) -> ClaimGuardrailReport:
+        """Review one claim against local prototype guardrails."""
+
+        readiness_report = self._readiness_gate.evaluate(
+            completed_capability_ids=completed_capability_ids,
+            requested_claim_level=claim.requested_claim_level,
+        )
+        findings = (
+            self._scope_findings(claim)
+            + self._prohibited_term_findings(claim)
+            + self._disclaimer_findings(claim)
+            + self._evidence_findings(claim)
+            + self._readiness_findings(claim, readiness_report)
+        )
+        return ClaimGuardrailReport(
+            claim_id=claim.claim_id,
+            decision=_decide_claim(findings),
+            findings=findings,
+            readiness_report=readiness_report,
+        )
+
+    def review_claims(
+        self,
+        claims: Iterable[BoundedClaim],
+        *,
+        completed_capability_ids: Iterable[str],
+    ) -> ClaimGuardrailBatchReport:
+        """Review a batch of claims against local prototype guardrails."""
+
+        completed_tuple = tuple(completed_capability_ids)
+        return ClaimGuardrailBatchReport(
+            reports=tuple(
+                self.review_claim(
+                    claim,
+                    completed_capability_ids=completed_tuple,
+                )
+                for claim in claims
+            )
+        )
+
+    def bounded_claim_from_dossier(
+        self,
+        dossier: AssuranceDossier,
+        *,
+        claim_id: str,
+        claim_text: str,
+        requested_claim_level: PrototypeClaimLevel = PrototypeClaimLevel.SERIOUS_PROTOTYPE,
+    ) -> BoundedClaim:
+        """Build a local-prototype claim from an assurance dossier."""
+
+        return BoundedClaim(
+            claim_id=claim_id,
+            text=claim_text,
+            scope=ClaimScope.LOCAL_PROTOTYPE,
+            requested_claim_level=requested_claim_level,
+            evidence_references=(
+                ClaimEvidenceReference(
+                    reference_id=dossier.dossier_id,
+                    kind=ClaimEvidenceReferenceKind.DOSSIER,
+                    summary=dossier.summary(),
+                ),
+            ),
+            required_disclaimers=(self._required_local_disclaimer,),
+        )
+
+    @staticmethod
+    def _scope_findings(claim: BoundedClaim) -> tuple[ClaimGuardrailFinding, ...]:
+        """Return findings for claim scope."""
+
+        if claim.scope.is_allowed_for_local_prototype():
+            return ()
+        return (
+            ClaimGuardrailFinding(
+                finding_id=f"claim-{claim.claim_id}-scope-blocked",
+                severity=ClaimGuardrailFindingSeverity.BLOCKER,
+                kind=ClaimGuardrailFindingKind.SCOPE_ALIGNMENT,
+                message=(
+                    "Claim scope exceeds local prototype/evaluation artifact boundaries and "
+                    "cannot be published as a local prototype claim."
+                ),
+                claim_id=claim.claim_id,
+            ),
+        )
+
+    @staticmethod
+    def _prohibited_term_findings(claim: BoundedClaim) -> tuple[ClaimGuardrailFinding, ...]:
+        """Return findings for prohibited claim language."""
+
+        normalized = claim.normalized_text()
+        findings: list[ClaimGuardrailFinding] = []
+        for prohibited_term in claim.prohibited_terms:
+            normalized_term = " ".join(prohibited_term.lower().split())
+            if normalized_term in normalized:
+                findings.append(
+                    ClaimGuardrailFinding(
+                        finding_id=f"claim-{claim.claim_id}-prohibited-{_slug(normalized_term)}",
+                        severity=ClaimGuardrailFindingSeverity.BLOCKER,
+                        kind=ClaimGuardrailFindingKind.PROHIBITED_CLAIM,
+                        message=(
+                            "Claim uses language that could imply certification, authority, "
+                            "deployment readiness, procurement acceptance, agency acceptance, "
+                            "or official endorsement."
+                        ),
+                        claim_id=claim.claim_id,
+                        prohibited_term=prohibited_term,
+                    )
+                )
+        return tuple(findings)
+
+    def _disclaimer_findings(self, claim: BoundedClaim) -> tuple[ClaimGuardrailFinding, ...]:
+        """Return findings for required local disclaimers."""
+
+        normalized = claim.normalized_text()
+        required = tuple(claim.required_disclaimers) or (self._required_local_disclaimer,)
+        findings: list[ClaimGuardrailFinding] = []
+        for disclaimer in required:
+            normalized_disclaimer = " ".join(disclaimer.lower().split())
+            if normalized_disclaimer not in normalized:
+                findings.append(
+                    ClaimGuardrailFinding(
+                        finding_id=(
+                            f"claim-{claim.claim_id}-missing-disclaimer-"
+                            f"{_slug(normalized_disclaimer)[:48]}"
+                        ),
+                        severity=ClaimGuardrailFindingSeverity.WARNING,
+                        kind=ClaimGuardrailFindingKind.REQUIRED_DISCLAIMER,
+                        message=(
+                            "Claim should carry the local-prototype disclaimer to avoid "
+                            "overstating readiness or authority."
+                        ),
+                        claim_id=claim.claim_id,
+                    )
+                )
+        return tuple(findings)
+
+    @staticmethod
+    def _evidence_findings(claim: BoundedClaim) -> tuple[ClaimGuardrailFinding, ...]:
+        """Return findings for evidence reference posture."""
+
+        findings: list[ClaimGuardrailFinding] = []
+        if not claim.evidence_references:
+            findings.append(
+                ClaimGuardrailFinding(
+                    finding_id=f"claim-{claim.claim_id}-no-evidence",
+                    severity=ClaimGuardrailFindingSeverity.BLOCKER,
+                    kind=ClaimGuardrailFindingKind.EVIDENCE_ALIGNMENT,
+                    message="Claim must cite at least one evidence reference.",
+                    claim_id=claim.claim_id,
+                )
+            )
+            return tuple(findings)
+
+        if not claim.cites_reference_kind(ClaimEvidenceReferenceKind.DOSSIER) and not (
+            claim.cites_reference_kind(ClaimEvidenceReferenceKind.READINESS_REPORT)
+        ):
+            findings.append(
+                ClaimGuardrailFinding(
+                    finding_id=f"claim-{claim.claim_id}-missing-readiness-evidence",
+                    severity=ClaimGuardrailFindingSeverity.WARNING,
+                    kind=ClaimGuardrailFindingKind.EVIDENCE_ALIGNMENT,
+                    message=(
+                        "Claim should cite a dossier or readiness report so maturity posture "
+                        "is reviewable."
+                    ),
+                    claim_id=claim.claim_id,
+                )
+            )
+
+        for evidence_reference in claim.evidence_references:
+            if evidence_reference.kind is ClaimEvidenceReferenceKind.OTHER:
+                findings.append(
+                    ClaimGuardrailFinding(
+                        finding_id=f"claim-{claim.claim_id}-other-evidence-{evidence_reference.reference_id}",
+                        severity=ClaimGuardrailFindingSeverity.WARNING,
+                        kind=ClaimGuardrailFindingKind.TRACEABILITY,
+                        message=(
+                            "Generic evidence references are allowed but weaker than typed "
+                            "dossier, export, ledger, review, provenance, or readiness evidence."
+                        ),
+                        claim_id=claim.claim_id,
+                        evidence_reference_id=evidence_reference.reference_id,
+                    )
+                )
+        return tuple(findings)
+
+    @staticmethod
+    def _readiness_findings(
+        claim: BoundedClaim,
+        readiness_report: PrototypeReadinessReport,
+    ) -> tuple[ClaimGuardrailFinding, ...]:
+        """Return findings from prototype readiness gate state."""
+
+        if readiness_report.decision is PrototypeReadinessDecision.READY:
+            return ()
+        severity = (
+            ClaimGuardrailFindingSeverity.BLOCKER
+            if readiness_report.decision is PrototypeReadinessDecision.BLOCKED
+            else ClaimGuardrailFindingSeverity.WARNING
+        )
+        return (
+            ClaimGuardrailFinding(
+                finding_id=f"claim-{claim.claim_id}-readiness-{readiness_report.decision.value}",
+                severity=severity,
+                kind=ClaimGuardrailFindingKind.READINESS,
+                message=(
+                    "Claim requested a prototype maturity level that is not fully supported "
+                    "by completed capability evidence."
+                ),
+                claim_id=claim.claim_id,
+            ),
+        )
+
+
+def _decide_claim(findings: tuple[ClaimGuardrailFinding, ...]) -> ClaimReviewDecision:
+    """Return claim review decision from guardrail findings."""
+
+    if any(finding.severity.blocks_publication() for finding in findings):
+        return ClaimReviewDecision.BLOCK
+    if any(
+        finding.severity is ClaimGuardrailFindingSeverity.WARNING
+        for finding in findings
+    ):
+        return ClaimReviewDecision.REVISE
+    return ClaimReviewDecision.ACCEPT
+
+
+def _slug(value: str) -> str:
+    """Return a deterministic lowercase slug for finding IDs."""
+
+    cleaned = "".join(character if character.isalnum() else "-" for character in value.lower())
+    while "--" in cleaned:
+        cleaned = cleaned.replace("--", "-")
+    return cleaned.strip("-") or "term"
