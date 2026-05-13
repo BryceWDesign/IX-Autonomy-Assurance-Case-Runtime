@@ -64,3 +64,35 @@ def test_scenario_campaign_public_exports_are_available() -> None:
     for export_name in expected_exports:
         assert export_name in ix.__all__
         assert hasattr(ix, export_name)
+
+
+def test_monitoring_public_exports_are_available() -> None:
+    expected_exports = (
+        "MONITORING_CAPABILITY_ID",
+        "DriftRecord",
+        "DriftStatus",
+        "IncidentRecord",
+        "IncidentSeverity",
+        "IncidentState",
+        "MonitoringLayerReadinessEvaluator",
+        "MonitoringLayerReadinessReport",
+        "MonitoringReadinessDecision",
+        "MonitoringReadinessFinding",
+        "MonitoringReadinessFindingSeverity",
+        "MonitoringReadinessFindingSource",
+        "MonitoringSnapshot",
+        "MonitoringSnapshotStatus",
+        "MonitoringTrail",
+        "MonitoringTrailValidator",
+        "MonitoringValidationFinding",
+        "MonitoringValidationFindingSeverity",
+        "MonitoringValidationFindingSource",
+        "MonitoringValidationReport",
+        "RevalidationTrigger",
+        "RevalidationTriggerSource",
+        "RevalidationTriggerState",
+    )
+
+    for export_name in expected_exports:
+        assert export_name in ix.__all__
+        assert hasattr(ix, export_name)
