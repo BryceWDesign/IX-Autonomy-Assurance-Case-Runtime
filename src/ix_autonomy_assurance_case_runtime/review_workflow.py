@@ -486,7 +486,11 @@ class ReviewWorkflowRecord:
     def accepted_signoff_ids(self) -> tuple[str, ...]:
         """Return signoff IDs that support acceptance."""
 
-        return tuple(signoff.signoff_id for signoff in self.signoffs if signoff.supports_acceptance())
+        return tuple(
+            signoff.signoff_id
+            for signoff in self.signoffs
+            if signoff.supports_acceptance()
+        )
 
     def required_evidence_bundle_ids(self) -> tuple[str, ...]:
         """Return unique evidence bundle IDs referenced by the workflow."""
