@@ -149,7 +149,7 @@ def test_provenance_readiness_feeds_prototype_claim_gate() -> None:
     )
 
     assert prototype_report.decision is PrototypeReadinessDecision.BLOCK
-    assert prototype_report.achieved_percent == 59
+    assert prototype_report.achieved_percent == 56
     assert prototype_report.completed_capability_ids == (
         "registry-layer",
         "policy-pack-engine",
