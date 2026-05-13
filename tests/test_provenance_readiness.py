@@ -3,6 +3,10 @@ from __future__ import annotations
 import pytest
 
 from ix_autonomy_assurance_case_runtime.contracts import ContractValueError
+from ix_autonomy_assurance_case_runtime.prototype_readiness import (
+    PrototypeClaimLevel,
+    PrototypeReadinessDecision,
+)
 from ix_autonomy_assurance_case_runtime.provenance import (
     ArtifactDigest,
     ProvenanceArtifactType,
@@ -23,11 +27,6 @@ from ix_autonomy_assurance_case_runtime.provenance_readiness import (
     ProvenanceReadinessFindingSeverity,
     ProvenanceReadinessFindingSource,
 )
-from ix_autonomy_assurance_case_runtime.prototype_readiness import (
-    PrototypeClaimLevel,
-    PrototypeReadinessDecision,
-)
-
 
 VALID_SHA256 = "a" * 64
 
