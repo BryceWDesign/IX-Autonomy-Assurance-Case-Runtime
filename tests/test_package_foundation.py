@@ -127,3 +127,31 @@ def test_review_workflow_public_exports_are_available() -> None:
     for export_name in expected_exports:
         assert export_name in ix.__all__
         assert hasattr(ix, export_name)
+
+
+def test_export_package_public_exports_are_available() -> None:
+    expected_exports = (
+        "EXPORT_PACKAGE_CAPABILITY_ID",
+        "ExportArtifactKind",
+        "ExportArtifactReference",
+        "ExportPackageAudience",
+        "ExportPackageFormat",
+        "ExportPackageLayerReadinessEvaluator",
+        "ExportPackageLayerReadinessReport",
+        "ExportPackageManifest",
+        "ExportPackageReadinessDecision",
+        "ExportPackageReadinessFinding",
+        "ExportPackageReadinessFindingSeverity",
+        "ExportPackageReadinessFindingSource",
+        "ExportPackageStatus",
+        "ExportPackageValidationFinding",
+        "ExportPackageValidationFindingSeverity",
+        "ExportPackageValidationFindingSource",
+        "ExportPackageValidationReport",
+        "ExportPackageValidator",
+        "ExportRedactionRule",
+    )
+
+    for export_name in expected_exports:
+        assert export_name in ix.__all__
+        assert hasattr(ix, export_name)
