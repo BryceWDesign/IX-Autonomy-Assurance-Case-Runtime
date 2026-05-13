@@ -166,7 +166,7 @@ def _campaign(
                 expected_result=VerificationResult.PASS,
                 tags=tags,
                 requirement_ids=("REQ-NAV-001",),
-                hazard_ids=("HZ-NAV-001"),
+                hazard_ids=("HZ-NAV-001",),
                 evidence_bundle_ids=("ev-campaign-scenario-001",),
             ),
         ),
@@ -275,7 +275,7 @@ def test_scenario_campaign_readiness_feeds_prototype_claim_gate() -> None:
     )
 
     assert prototype_report.decision is PrototypeReadinessDecision.BLOCK
-    assert prototype_report.achieved_percent == 68
+    assert prototype_report.achieved_percent == 66
     assert prototype_report.completed_capability_ids == (
         "registry-layer",
         "policy-pack-engine",
