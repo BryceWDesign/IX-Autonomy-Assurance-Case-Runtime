@@ -308,6 +308,9 @@ class FrameworkEvidenceValidator:
                 )
                 continue
 
+            if bundle.validate_integrity().errors:
+                continue
+
             missing_kinds = _missing_expected_evidence_kinds(
                 bundle=bundle,
                 expected_evidence_kinds=reference.expected_evidence_kinds,
