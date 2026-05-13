@@ -96,3 +96,34 @@ def test_monitoring_public_exports_are_available() -> None:
     for export_name in expected_exports:
         assert export_name in ix.__all__
         assert hasattr(ix, export_name)
+
+
+def test_review_workflow_public_exports_are_available() -> None:
+    expected_exports = (
+        "REVIEW_WORKFLOW_CAPABILITY_ID",
+        "ReviewAuthorityBinding",
+        "ReviewAuthorityScope",
+        "ReviewDissentRecord",
+        "ReviewDissentSeverity",
+        "ReviewFinding",
+        "ReviewFindingSeverity",
+        "ReviewFindingStatus",
+        "ReviewSignoffRecord",
+        "ReviewWorkflowLayerReadinessEvaluator",
+        "ReviewWorkflowLayerReadinessReport",
+        "ReviewWorkflowReadinessDecision",
+        "ReviewWorkflowReadinessFinding",
+        "ReviewWorkflowReadinessFindingSeverity",
+        "ReviewWorkflowReadinessFindingSource",
+        "ReviewWorkflowRecord",
+        "ReviewWorkflowStatus",
+        "ReviewWorkflowValidationFinding",
+        "ReviewWorkflowValidationFindingSeverity",
+        "ReviewWorkflowValidationFindingSource",
+        "ReviewWorkflowValidationReport",
+        "ReviewWorkflowValidator",
+    )
+
+    for export_name in expected_exports:
+        assert export_name in ix.__all__
+        assert hasattr(ix, export_name)
