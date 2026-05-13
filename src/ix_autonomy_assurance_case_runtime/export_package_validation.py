@@ -418,6 +418,16 @@ class ExportPackageValidator:
         """Validate provenance manifest reference coverage."""
 
         findings: list[ExportPackageValidationFinding] = []
+        if not manifest.provenance_manifest_ids:
+            findings.append(
+                ExportPackageValidationFinding(
+                    finding_id=f"package-{manifest.package_id}-no-provenance",
+                    severity=ExportPackageValidationFindingSeverity.BLOCKER,
+                    source=ExportPackageValidationFindingSource.PROVENANCE,
+                    message="Export package requires package-level provenance manifest references.",
+                    package_id=manifest.package_id,
+                )
+            )
         for manifest_id in manifest.required_provenance_manifest_ids():
             if manifest_id not in self._provenance_manifest_ids:
                 findings.append(
@@ -430,16 +440,6 @@ class ExportPackageValidator:
                         provenance_manifest_id=manifest_id,
                     )
                 )
-        if not manifest.required_provenance_manifest_ids():
-            findings.append(
-                ExportPackageValidationFinding(
-                    finding_id=f"package-{manifest.package_id}-no-provenance",
-                    severity=ExportPackageValidationFindingSeverity.BLOCKER,
-                    source=ExportPackageValidationFindingSource.PROVENANCE,
-                    message="Export package requires provenance manifest references.",
-                    package_id=manifest.package_id,
-                )
-            )
         return tuple(findings)
 
     @staticmethod
