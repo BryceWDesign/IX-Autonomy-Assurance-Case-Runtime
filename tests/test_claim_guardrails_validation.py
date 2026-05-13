@@ -288,7 +288,10 @@ def test_claim_guardrail_validator_blocks_unknown_reviewer_capability_and_artifa
     assert not report.is_claim_release_ready()
     assert report.findings_for_reviewer("reviewer-001")
     assert any(finding.capability_id == "assurance-dossier" for finding in report.findings)
-    assert any(finding.artifact_id == "artifact-readiness-rollup-001" for finding in report.findings)
+    assert any(
+        finding.artifact_id == "artifact-readiness-rollup-001"
+        for finding in report.findings
+    )
 
 
 def test_claim_guardrail_validator_blocks_missing_evidence_bundle() -> None:
