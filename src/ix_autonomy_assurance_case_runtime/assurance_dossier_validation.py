@@ -19,7 +19,6 @@ from ix_autonomy_assurance_case_runtime.assurance_dossier import (
     AssuranceDossierManifest,
     DossierArtifactKind,
     DossierArtifactReference,
-    DossierEvidenceReference,
 )
 from ix_autonomy_assurance_case_runtime.contracts import ContractValueError, RuntimeStrEnum
 from ix_autonomy_assurance_case_runtime.evidence import EvidenceBundle
@@ -406,7 +405,9 @@ class AssuranceDossierValidator:
                             review_workflow_id=review_workflow_id,
                         )
                     )
-            findings.extend(_trace_requirement_and_hazard_findings(manifest, thread.trace_thread_id))
+            findings.extend(
+                _trace_requirement_and_hazard_findings(manifest, thread.trace_thread_id)
+            )
         return tuple(findings)
 
     @staticmethod
