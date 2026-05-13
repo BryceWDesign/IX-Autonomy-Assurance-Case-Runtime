@@ -1,357 +1,537 @@
-"""Target capability model for the serious federal/IC/DoD prototype evolution.
+"""Serious prototype target and maturity model.
 
-This module defines the stable 80-percent prototype target used to govern the
-next expansion of the runtime. It is intentionally modest: it does not claim
-certification, classified deployment readiness, or operational acceptance.
-Instead, it makes the missing capability families explicit so future commits can
-add them without drifting into vague roadmap language.
+This module defines the local open-source maturity target used by the runtime.
+It intentionally models prototype maturity only. It does not claim certification,
+authority to operate, deployment approval, official endorsement, procurement
+acceptance, or agency acceptance.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ix_autonomy_assurance_case_runtime.contracts import ContractValueError, RuntimeStrEnum
 
 BASELINE_MATURITY_PERCENT = 40
 SERIOUS_PROTOTYPE_TARGET_PERCENT = 80
+MAXIMUM_LOCAL_PROTOTYPE_PERCENT = 100
 
 
 class PrototypeCapabilityArea(RuntimeStrEnum):
-    """Capability families required for the serious prototype target."""
+    """Capability area for a serious prototype target."""
 
+    GOVERNANCE = "governance"
     REGISTRY = "registry"
     POLICY = "policy"
-    FRAMEWORK_CROSSWALK = "framework_crosswalk"
+    FRAMEWORK = "framework"
     PROVENANCE = "provenance"
     TELEMETRY = "telemetry"
-    SCENARIO_CAMPAIGNS = "scenario_campaigns"
+    SCENARIO_CAMPAIGN = "scenario_campaign"
     MONITORING = "monitoring"
     REVIEW_WORKFLOW = "review_workflow"
-    EXPORT_PACKAGES = "export_packages"
-    SECURITY_HARDENING = "security_hardening"
+    AUDIT_EXPORT = "audit_export"
+    TRACE_CLOSURE = "trace_closure"
+    CLAIM_GOVERNANCE = "claim_governance"
+    FEDERAL_EVALUATION = "federal_evaluation"
+    RUNTIME_EVIDENCE = "runtime_evidence"
+    ASSURANCE_ALIGNMENT = "assurance_alignment"
+    HUMAN_AUTHORITY = "human_authority"
+
+    def is_runtime_facing(self) -> bool:
+        """Return whether this area directly describes runtime behavior."""
+
+        return self in {
+            PrototypeCapabilityArea.TELEMETRY,
+            PrototypeCapabilityArea.SCENARIO_CAMPAIGN,
+            PrototypeCapabilityArea.MONITORING,
+            PrototypeCapabilityArea.RUNTIME_EVIDENCE,
+        }
+
+    def is_review_facing(self) -> bool:
+        """Return whether this area supports review, claims, or evaluation."""
+
+        return self in {
+            PrototypeCapabilityArea.REVIEW_WORKFLOW,
+            PrototypeCapabilityArea.AUDIT_EXPORT,
+            PrototypeCapabilityArea.TRACE_CLOSURE,
+            PrototypeCapabilityArea.CLAIM_GOVERNANCE,
+            PrototypeCapabilityArea.FEDERAL_EVALUATION,
+            PrototypeCapabilityArea.ASSURANCE_ALIGNMENT,
+            PrototypeCapabilityArea.HUMAN_AUTHORITY,
+        }
 
 
 @dataclass(frozen=True, slots=True)
 class PrototypeCapabilityTarget:
-    """One measurable capability needed to reach the 80-percent prototype target."""
+    """One capability target that contributes to local prototype maturity."""
 
     capability_id: str
     area: PrototypeCapabilityArea
-    name: str
-    purpose: str
-    acceptance_signals: tuple[str, ...]
-    blocked_claims_until_met: tuple[str, ...]
-    maturity_lift_points: int
+    title: str
+    description: str
+    maturity_increment_percent: int
+    evidence_expectations: tuple[str, ...] = field(default_factory=tuple)
+    required_for_serious_prototype: bool = True
 
     def __post_init__(self) -> None:
-        """Validate that target capability records are strict and reviewable."""
+        """Validate prototype capability target fields."""
 
-        if not self.capability_id.strip():
-            raise ContractValueError("Prototype capability ID must not be blank.")
-        if self.capability_id != self.capability_id.strip():
-            raise ContractValueError("Prototype capability ID must not contain edge whitespace.")
-        if not self.name.strip():
-            raise ContractValueError(f"Prototype capability {self.capability_id!r} needs a name.")
-        if not self.purpose.strip():
-            message = f"Prototype capability {self.capability_id!r} needs a purpose."
-            raise ContractValueError(message)
-        if not self.acceptance_signals:
-            message = f"Prototype capability {self.capability_id!r} needs acceptance signals."
-            raise ContractValueError(message)
-        if not self.blocked_claims_until_met:
-            message = f"Prototype capability {self.capability_id!r} needs blocked-claim limits."
-            raise ContractValueError(message)
-        if self.maturity_lift_points <= 0:
-            message = f"Prototype capability {self.capability_id!r} must lift maturity."
-            raise ContractValueError(message)
-        for signal in self.acceptance_signals:
-            if not signal.strip():
-                message = f"Prototype capability {self.capability_id!r} has a blank signal."
-                raise ContractValueError(message)
-        for blocked_claim in self.blocked_claims_until_met:
-            if not blocked_claim.strip():
-                message = f"Prototype capability {self.capability_id!r} has a blank claim limit."
-                raise ContractValueError(message)
-
-    def requires_audit_artifact(self) -> bool:
-        """Return whether this target requires explicit reviewable evidence."""
-
-        audit_terms = (
-            "audit",
-            "attestation",
-            "evidence",
-            "ledger",
-            "metadata",
-            "record",
-            "report",
-            "review",
-            "signature",
-            "trace",
+        object.__setattr__(
+            self,
+            "capability_id",
+            _require_identifier(self.capability_id, "capability_id"),
         )
-        searchable_text = " ".join((self.purpose, *self.acceptance_signals)).lower()
-        return any(term in searchable_text for term in audit_terms)
+        object.__setattr__(self, "title", _require_text(self.title, "title"))
+        object.__setattr__(
+            self,
+            "description",
+            _require_text(self.description, "description"),
+        )
+        object.__setattr__(
+            self,
+            "evidence_expectations",
+            _normalize_text_tuple(
+                self.evidence_expectations,
+                "evidence_expectations",
+            ),
+        )
+        if self.maturity_increment_percent <= 0:
+            raise ContractValueError(
+                "maturity_increment_percent must be greater than zero."
+            )
+
+    @property
+    def name(self) -> str:
+        """Compatibility alias for title."""
+
+        return self.title
+
+    @property
+    def percent_contribution(self) -> int:
+        """Compatibility alias for the maturity increment."""
+
+        return self.maturity_increment_percent
+
+    @property
+    def maturity_percent(self) -> int:
+        """Compatibility alias for the maturity increment."""
+
+        return self.maturity_increment_percent
+
+    def is_completed_by(self, completed_capability_ids: Iterable[str]) -> bool:
+        """Return whether this target is completed by the supplied capability IDs."""
+
+        return self.capability_id in set(completed_capability_ids)
+
+    def summary(self) -> str:
+        """Return a deterministic capability target summary."""
+
+        return (
+            f"{self.capability_id}: {self.title} "
+            f"({self.area.value}, +{self.maturity_increment_percent}%)"
+        )
 
 
 @dataclass(frozen=True, slots=True)
 class PrototypeMaturityAssessment:
-    """Calculated maturity posture against the 80-percent serious prototype target."""
+    """Maturity assessment for a set of completed capability IDs."""
 
-    baseline_percent: int
-    target_percent: int
     achieved_percent: int
+    target_percent: int
     completed_capability_ids: tuple[str, ...]
-    remaining_capability_ids: tuple[str, ...]
+    target_capability_ids: tuple[str, ...]
+    missing_capability_ids: tuple[str, ...]
+    unexpected_capability_ids: tuple[str, ...]
+    duplicate_capability_ids: tuple[str, ...]
+    baseline_percent: int = BASELINE_MATURITY_PERCENT
+    maximum_percent: int = MAXIMUM_LOCAL_PROTOTYPE_PERCENT
+
+    def __post_init__(self) -> None:
+        """Validate prototype maturity assessment fields."""
+
+        if self.achieved_percent < 0:
+            raise ContractValueError("achieved_percent must not be negative.")
+        if self.target_percent < 0:
+            raise ContractValueError("target_percent must not be negative.")
+        if self.baseline_percent < 0:
+            raise ContractValueError("baseline_percent must not be negative.")
+        if self.maximum_percent <= 0:
+            raise ContractValueError("maximum_percent must be greater than zero.")
+        object.__setattr__(
+            self,
+            "completed_capability_ids",
+            _normalize_identifier_tuple(
+                self.completed_capability_ids,
+                "completed_capability_ids",
+                reject_duplicates=False,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "target_capability_ids",
+            _normalize_identifier_tuple(
+                self.target_capability_ids,
+                "target_capability_ids",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "missing_capability_ids",
+            _normalize_identifier_tuple(
+                self.missing_capability_ids,
+                "missing_capability_ids",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "unexpected_capability_ids",
+            _normalize_identifier_tuple(
+                self.unexpected_capability_ids,
+                "unexpected_capability_ids",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "duplicate_capability_ids",
+            _normalize_identifier_tuple(
+                self.duplicate_capability_ids,
+                "duplicate_capability_ids",
+            ),
+        )
 
     @property
-    def remaining_percent(self) -> int:
-        """Return the remaining percentage points needed to reach the target."""
+    def completed_target_count(self) -> int:
+        """Return count of completed capability IDs that are in the target model."""
 
-        return max(self.target_percent - self.achieved_percent, 0)
+        target_ids = set(self.target_capability_ids)
+        return sum(
+            1
+            for capability_id in dict.fromkeys(self.completed_capability_ids)
+            if capability_id in target_ids
+        )
 
-    def meets_serious_prototype_target(self) -> bool:
-        """Return whether the target maturity has been reached."""
+    @property
+    def target_count(self) -> int:
+        """Return the number of capability targets in the model."""
+
+        return len(self.target_capability_ids)
+
+    def target_percent_met(self) -> bool:
+        """Return whether achieved percent meets the serious prototype target."""
 
         return self.achieved_percent >= self.target_percent
 
+    def is_serious_prototype_target_met(self) -> bool:
+        """Return whether achieved percent meets the serious prototype target."""
+
+        return self.target_percent_met()
+
+    def completion_ratio(self) -> float:
+        """Return completed target ratio as a float."""
+
+        if not self.target_capability_ids:
+            return 0.0
+        return self.completed_target_count / len(self.target_capability_ids)
+
+    def summary(self) -> str:
+        """Return a deterministic maturity assessment summary."""
+
+        return (
+            f"prototype-maturity: {self.achieved_percent}% "
+            f"({self.completed_target_count}/{self.target_count} target capability(s), "
+            f"{len(self.missing_capability_ids)} missing, "
+            f"{len(self.unexpected_capability_ids)} unexpected, "
+            f"{len(self.duplicate_capability_ids)} duplicate)"
+        )
+
 
 def build_serious_prototype_targets() -> tuple[PrototypeCapabilityTarget, ...]:
-    """Return the canonical capability targets for the 80-percent evolution."""
+    """Return the serious-prototype target capability model.
+
+    The first nine capabilities preserve the original 40% -> 80% serious
+    prototype path. The later hardening capabilities extend the local prototype
+    posture beyond 80% without claiming official approval or deployment fitness.
+    """
 
     return (
         PrototypeCapabilityTarget(
             capability_id="registry-layer",
             area=PrototypeCapabilityArea.REGISTRY,
-            name="Model, system, and use-case registry",
-            purpose=(
-                "Record AI/autonomy systems, model versions, ownership, approved uses, "
-                "deployment context, lifecycle state, and risk tier."
+            title="Registry layer",
+            description=(
+                "Registered systems, models, use cases, deployments, lifecycle "
+                "state, and risk posture are represented as strict records."
             ),
-            acceptance_signals=(
-                "Typed records exist for systems, models, use cases, deployments, and risk tiers.",
-                "Registry entries link to assurance cases, scenario evidence, and approval state.",
-                "Tests reject blank ownership, unsupported lifecycle state, "
-                "and missing intended use.",
+            maturity_increment_percent=4,
+            evidence_expectations=(
+                "registered systems",
+                "registered use cases",
+                "registry evidence coverage",
             ),
-            blocked_claims_until_met=(
-                "Cannot claim enterprise AI inventory support.",
-                "Cannot claim model registry readiness.",
-            ),
-            maturity_lift_points=5,
         ),
         PrototypeCapabilityTarget(
             capability_id="policy-pack-engine",
             area=PrototypeCapabilityArea.POLICY,
-            name="Policy-pack engine and waiver lifecycle",
-            purpose=(
-                "Evaluate machine-readable policy packs for allowed actions, blocked actions, "
-                "authority requirements, review triggers, and bounded waiver decisions."
+            title="Policy pack engine",
+            description=(
+                "Policy packs, rules, waivers, evaluation reports, and waiver "
+                "evidence are validated before runtime claims can progress."
             ),
-            acceptance_signals=(
-                "Policy packs produce allow, review, block, or waiver-required decisions.",
-                "Waivers require explicit authority, expiration, scope, and evidence references.",
-                "Tests prove unsafe actions fail closed when policy or waiver data is missing.",
+            maturity_increment_percent=4,
+            evidence_expectations=(
+                "policy rules",
+                "policy decisions",
+                "waiver evidence",
             ),
-            blocked_claims_until_met=(
-                "Cannot claim policy-as-code governance.",
-                "Cannot claim delegated-risk acceptance tracking.",
-            ),
-            maturity_lift_points=5,
         ),
         PrototypeCapabilityTarget(
             capability_id="framework-crosswalks",
-            area=PrototypeCapabilityArea.FRAMEWORK_CROSSWALK,
-            name="Federal assurance framework crosswalks",
-            purpose=(
-                "Map runtime assurance artifacts to recognized governance, risk, acquisition, "
-                "and testing control objectives without claiming official certification."
+            area=PrototypeCapabilityArea.FRAMEWORK,
+            title="Framework crosswalks",
+            description=(
+                "Framework objectives, control mappings, coverage status, and "
+                "supporting evidence are captured as reviewable records."
             ),
-            acceptance_signals=(
-                "Control objectives can be mapped to evidence, claims, scenarios, and reports.",
-                "Coverage reports identify satisfied, partial, missing, and out-of-scope controls.",
-                "Tests prove unknown frameworks and duplicate control IDs are rejected.",
+            maturity_increment_percent=4,
+            evidence_expectations=(
+                "control mappings",
+                "framework evidence",
+                "coverage findings",
             ),
-            blocked_claims_until_met=(
-                "Cannot claim federal-control alignment evidence.",
-                "Cannot claim reviewer-ready coverage reporting.",
-            ),
-            maturity_lift_points=4,
         ),
         PrototypeCapabilityTarget(
             capability_id="signed-provenance",
             area=PrototypeCapabilityArea.PROVENANCE,
-            name="Signed provenance and evidence attestation",
-            purpose=(
-                "Attach artifact digests, signer identity metadata, signature records, and "
-                "verification status to evidence bundles and run-ledger entries."
+            title="Signed provenance",
+            description=(
+                "Artifacts, digests, signatures, signer identity, verification "
+                "policy, and provenance readiness are represented explicitly."
             ),
-            acceptance_signals=(
-                "Evidence manifests include deterministic artifact digests and signer metadata.",
-                "Signature verification distinguishes verified, unsigned, mismatched, "
-                "and expired states.",
-                "Tamper tests prove changed evidence cannot silently retain a valid attestation.",
+            maturity_increment_percent=4,
+            evidence_expectations=(
+                "artifact digests",
+                "signature posture",
+                "provenance verification",
             ),
-            blocked_claims_until_met=(
-                "Cannot claim signed evidence package support.",
-                "Cannot claim provenance-backed artifact integrity.",
-            ),
-            maturity_lift_points=5,
         ),
         PrototypeCapabilityTarget(
             capability_id="telemetry-adapters",
             area=PrototypeCapabilityArea.TELEMETRY,
-            name="Telemetry adapter and source-trust boundary",
-            purpose=(
-                "Normalize runtime telemetry from typed adapters while preserving source identity, "
-                "timestamp posture, schema validation, replay metadata, and trust limits."
+            title="Telemetry adapters",
+            description=(
+                "Telemetry sources, schemas, envelopes, replay records, adapter "
+                "normalization, and replay bounds are validated."
             ),
-            acceptance_signals=(
-                "Adapters produce canonical telemetry envelopes with source "
-                "and timestamp metadata.",
-                "Stale, malformed, spoofed, and unsupported telemetry is rejected or degraded.",
-                "Replay fixtures can reproduce accepted and rejected telemetry decisions.",
+            maturity_increment_percent=5,
+            evidence_expectations=(
+                "trusted telemetry source posture",
+                "schema coverage",
+                "replay records",
             ),
-            blocked_claims_until_met=(
-                "Cannot claim real telemetry ingestion posture.",
-                "Cannot claim source-trust-aware runtime evaluation.",
-            ),
-            maturity_lift_points=4,
         ),
         PrototypeCapabilityTarget(
             capability_id="scenario-campaign-runner",
-            area=PrototypeCapabilityArea.SCENARIO_CAMPAIGNS,
-            name="Scenario campaign runner and adversarial lab",
-            purpose=(
-                "Run multi-scenario evaluation campaigns with acceptance thresholds, adversarial "
-                "probes, regression posture, failure clustering, and campaign evidence reports."
+            area=PrototypeCapabilityArea.SCENARIO_CAMPAIGN,
+            title="Scenario campaign runner",
+            description=(
+                "Scenario campaigns, acceptance thresholds, stop rules, runner "
+                "reports, and campaign readiness are captured."
             ),
-            acceptance_signals=(
-                "Campaigns aggregate multiple scenario runs into deterministic "
-                "pass/fail summaries.",
-                "Adversarial, degraded-mode, regression, and stress campaign tags are supported.",
-                "Tests prove threshold failures cannot be reported as accepted campaigns.",
+            maturity_increment_percent=5,
+            evidence_expectations=(
+                "scenario campaign catalog",
+                "campaign run report",
+                "acceptance thresholds",
             ),
-            blocked_claims_until_met=(
-                "Cannot claim campaign-level T&E support.",
-                "Cannot claim adversarial evaluation coverage.",
-            ),
-            maturity_lift_points=5,
         ),
         PrototypeCapabilityTarget(
             capability_id="monitoring-incidents",
             area=PrototypeCapabilityArea.MONITORING,
-            name="Monitoring, drift, and incident trail",
-            purpose=(
-                "Track lifecycle monitoring snapshots, drift posture, incident records, "
-                "revalidation triggers, and degraded confidence over time."
+            title="Monitoring incidents",
+            description=(
+                "Monitoring snapshots, drift records, incidents, and revalidation "
+                "triggers are linked into readiness decisions."
             ),
-            acceptance_signals=(
-                "Monitoring snapshots preserve system, model, scenario, and evidence references.",
-                "Drift and incident records can force revalidation or authority review.",
-                "Tests prove stale monitoring data cannot support current acceptance claims.",
+            maturity_increment_percent=5,
+            evidence_expectations=(
+                "monitoring trail",
+                "incident records",
+                "revalidation triggers",
             ),
-            blocked_claims_until_met=(
-                "Cannot claim lifecycle monitoring support.",
-                "Cannot claim performance-shift response tracking.",
-            ),
-            maturity_lift_points=4,
         ),
         PrototypeCapabilityTarget(
             capability_id="review-workflow",
             area=PrototypeCapabilityArea.REVIEW_WORKFLOW,
-            name="Reviewer workflow, signoff, and dissent trail",
-            purpose=(
-                "Represent reviewer roles, approvals, conditional approvals, dissent, unresolved "
-                "findings, and disposition history as audit-ready workflow records."
+            title="Review workflow",
+            description=(
+                "Human review authority, findings, signoffs, dissent, and review "
+                "workflow readiness are modeled explicitly."
             ),
-            acceptance_signals=(
-                "Review records preserve actor role, authority scope, disposition, and rationale.",
-                "Unresolved findings block acceptance unless a bounded waiver "
-                "explicitly covers them.",
-                "Tests prove dissent and missing rationale survive export and "
-                "cannot be erased silently.",
+            maturity_increment_percent=5,
+            evidence_expectations=(
+                "review findings",
+                "human signoff",
+                "dissent preservation",
             ),
-            blocked_claims_until_met=(
-                "Cannot claim structured human governance workflow.",
-                "Cannot claim audit-ready signoff support.",
-            ),
-            maturity_lift_points=3,
         ),
         PrototypeCapabilityTarget(
-            capability_id="audit-export-packages",
-            area=PrototypeCapabilityArea.EXPORT_PACKAGES,
-            name="Audit, T&E, acquisition, and governance package exports",
-            purpose=(
-                "Produce deterministic export packages that collect claims, evidence, policy, "
-                "traceability, review state, provenance, and unresolved gaps for external review."
+            capability_id="audit-report-export",
+            area=PrototypeCapabilityArea.AUDIT_EXPORT,
+            title="Audit report export",
+            description=(
+                "Export package manifests, redaction rules, evidence references, "
+                "provenance references, and non-official disclaimers are checked."
             ),
-            acceptance_signals=(
-                "Export packages include manifest, evidence index, policy posture, "
-                "and open findings.",
-                "Different package profiles can emphasize audit, T&E, acquisition, "
-                "or governance review.",
-                "Tests prove missing required sections fail package validation.",
+            maturity_increment_percent=4,
+            evidence_expectations=(
+                "export package manifest",
+                "redaction rules",
+                "machine-readable package",
             ),
-            blocked_claims_until_met=(
-                "Cannot claim oversight-ready package generation.",
-                "Cannot claim acquisition-review package support.",
-            ),
-            maturity_lift_points=3,
         ),
         PrototypeCapabilityTarget(
-            capability_id="security-hardening",
-            area=PrototypeCapabilityArea.SECURITY_HARDENING,
-            name="Security hardening and adversarial evidence defenses",
-            purpose=(
-                "Expand threat tests for tampered evidence, replay abuse, unsafe waiver scope, "
-                "unsupported policy bypass, and misleading provenance claims."
+            capability_id="assurance-dossier",
+            area=PrototypeCapabilityArea.TRACE_CLOSURE,
+            title="Assurance dossier",
+            description=(
+                "Mission threads are closed across requirement, scenario, hazard, "
+                "control, evidence, human review, export package, and provenance links."
             ),
-            acceptance_signals=(
-                "Adversarial tests cover tamper, replay, stale input, and policy-bypass attempts.",
-                "Security documentation distinguishes local prototype limits from "
-                "deployment controls.",
-                "Tests prove the runtime fails closed on unsupported trust or authority claims.",
+            maturity_increment_percent=8,
+            evidence_expectations=(
+                "closed trace threads",
+                "runtime artifacts",
+                "closure artifacts",
             ),
-            blocked_claims_until_met=(
-                "Cannot claim hardened evidence workflow posture.",
-                "Cannot claim adversarial misuse resistance beyond the current local prototype.",
+        ),
+        PrototypeCapabilityTarget(
+            capability_id="claim-guardrails",
+            area=PrototypeCapabilityArea.CLAIM_GOVERNANCE,
+            title="Claim guardrails",
+            description=(
+                "Public and review-package claims are bounded, evidence-backed, "
+                "language-checked, and kept away from certification or agency claims."
             ),
-            maturity_lift_points=2,
+            maturity_increment_percent=6,
+            evidence_expectations=(
+                "claim evidence references",
+                "prohibited phrase rules",
+                "non-endorsement claims",
+            ),
+        ),
+        PrototypeCapabilityTarget(
+            capability_id="federal-evaluation-profile",
+            area=PrototypeCapabilityArea.FEDERAL_EVALUATION,
+            title="Federal evaluation profile",
+            description=(
+                "Local capability, artifact, and evidence records are mapped to "
+                "federal/IC/DoD-style review concerns without claiming acceptance."
+            ),
+            maturity_increment_percent=6,
+            evidence_expectations=(
+                "core T&E concern coverage",
+                "evaluation mappings",
+                "bounded disclaimer",
+            ),
         ),
     )
+
+
+def serious_prototype_capability_ids() -> tuple[str, ...]:
+    """Return all capability IDs in the serious prototype target model."""
+
+    return tuple(target.capability_id for target in build_serious_prototype_targets())
 
 
 def assess_serious_prototype_maturity(
     completed_capability_ids: Iterable[str],
 ) -> PrototypeMaturityAssessment:
-    """Assess maturity progress against the serious prototype target capabilities."""
+    """Assess local prototype maturity from completed capability IDs."""
 
-    targets = build_serious_prototype_targets()
-    target_by_id = {target.capability_id: target for target in targets}
-    completed_unique = tuple(dict.fromkeys(completed_capability_ids))
-    unknown_ids = tuple(
-        capability_id for capability_id in completed_unique if capability_id not in target_by_id
+    completed = tuple(_require_identifier(value, "completed_capability_ids") for value in completed_capability_ids)
+    target_by_id = {
+        target.capability_id: target for target in build_serious_prototype_targets()
+    }
+    target_ids = tuple(target_by_id)
+    unique_completed = tuple(dict.fromkeys(completed))
+    duplicate_ids = _duplicate_identifiers(completed)
+    unexpected_ids = tuple(
+        capability_id for capability_id in unique_completed if capability_id not in target_by_id
     )
-    if unknown_ids:
-        formatted = ", ".join(repr(capability_id) for capability_id in unknown_ids)
-        raise ContractValueError(f"Unknown prototype capability ID(s): {formatted}")
-
-    achieved_lift = sum(
-        target_by_id[capability_id].maturity_lift_points for capability_id in completed_unique
+    missing_ids = tuple(
+        capability_id for capability_id in target_ids if capability_id not in unique_completed
     )
-    achieved_percent = min(
-        BASELINE_MATURITY_PERCENT + achieved_lift,
-        SERIOUS_PROTOTYPE_TARGET_PERCENT,
+    achieved_percent = BASELINE_MATURITY_PERCENT + sum(
+        target_by_id[capability_id].maturity_increment_percent
+        for capability_id in unique_completed
+        if capability_id in target_by_id
     )
-    remaining_ids = tuple(
-        target.capability_id for target in targets if target.capability_id not in completed_unique
-    )
+    achieved_percent = min(achieved_percent, MAXIMUM_LOCAL_PROTOTYPE_PERCENT)
 
     return PrototypeMaturityAssessment(
-        baseline_percent=BASELINE_MATURITY_PERCENT,
-        target_percent=SERIOUS_PROTOTYPE_TARGET_PERCENT,
         achieved_percent=achieved_percent,
-        completed_capability_ids=completed_unique,
-        remaining_capability_ids=remaining_ids,
+        target_percent=SERIOUS_PROTOTYPE_TARGET_PERCENT,
+        completed_capability_ids=completed,
+        target_capability_ids=target_ids,
+        missing_capability_ids=missing_ids,
+        unexpected_capability_ids=unexpected_ids,
+        duplicate_capability_ids=duplicate_ids,
     )
+
+
+def _duplicate_identifiers(values: tuple[str, ...]) -> tuple[str, ...]:
+    """Return duplicate identifiers in first-duplicate order."""
+
+    seen: set[str] = set()
+    duplicates: list[str] = []
+    for value in values:
+        if value in seen and value not in duplicates:
+            duplicates.append(value)
+        seen.add(value)
+    return tuple(duplicates)
+
+
+def _normalize_identifier_tuple(
+    values: tuple[str, ...],
+    field_name: str,
+    *,
+    reject_duplicates: bool = True,
+) -> tuple[str, ...]:
+    """Validate identifier tuples and optionally reject duplicates."""
+
+    normalized = tuple(_require_identifier(value, field_name) for value in values)
+    if reject_duplicates and len(normalized) != len(set(normalized)):
+        raise ContractValueError(f"{field_name} must not contain duplicate identifiers.")
+    return normalized
+
+
+def _normalize_text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, ...]:
+    """Validate text tuples and reject duplicates."""
+
+    normalized = tuple(_require_text(value, field_name) for value in values)
+    if len(normalized) != len(set(normalized)):
+        raise ContractValueError(f"{field_name} must not contain duplicate values.")
+    return normalized
+
+
+def _require_identifier(value: str, field_name: str) -> str:
+    """Validate and return a stable prototype target identifier."""
+
+    normalized = value.strip()
+    if not normalized:
+        raise ContractValueError(f"{field_name} must not be blank.")
+    if normalized != value:
+        raise ContractValueError(f"{field_name} must not contain edge whitespace.")
+    if " " in normalized:
+        raise ContractValueError(f"{field_name} must not contain spaces.")
+    return normalized
+
+
+def _require_text(value: str, field_name: str) -> str:
+    """Validate and return nonblank prototype target text."""
+
+    normalized = value.strip()
+    if not normalized:
+        raise ContractValueError(f"{field_name} must not be blank.")
+    return normalized
