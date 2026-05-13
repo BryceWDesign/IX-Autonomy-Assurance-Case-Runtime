@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import ix_autonomy_assurance_case_runtime as ix
 
-
 CAPABILITY_EXPORT_GROUPS = {
     "registry-layer": (
         "REGISTRY_CAPABILITY_ID",
