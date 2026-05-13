@@ -17,6 +17,14 @@ def _all_capability_ids() -> tuple[str, ...]:
     return tuple(target.capability_id for target in build_serious_prototype_targets())
 
 
+def _required_capability_ids() -> tuple[str, ...]:
+    return tuple(
+        target.capability_id
+        for target in build_serious_prototype_targets()
+        if target.required_for_serious_prototype
+    )
+
+
 def test_local_reference_claim_is_allowed_with_limits_before_target_completion() -> None:
     report = PrototypeReadinessGate().evaluate(
         completed_capability_ids=(),
@@ -34,7 +42,7 @@ def test_local_reference_claim_is_allowed_with_limits_before_target_completion()
     )
 
 
-def test_serious_open_source_claim_is_blocked_until_all_target_capabilities_are_complete() -> None:
+def test_serious_open_source_claim_is_blocked_until_required_capabilities_are_complete() -> None:
     report = PrototypeReadinessGate().evaluate(
         completed_capability_ids=("registry-layer", "policy-pack-engine"),
         requested_claim_level=PrototypeClaimLevel.SERIOUS_OPEN_SOURCE_PROTOTYPE,
@@ -42,14 +50,31 @@ def test_serious_open_source_claim_is_blocked_until_all_target_capabilities_are_
 
     assert report.decision is PrototypeReadinessDecision.BLOCK
     assert not report.permits_requested_claim()
-    assert report.achieved_percent == 50
-    assert report.blocker_count == 8
+    assert report.achieved_percent == 48
+    assert report.blocker_count == 7
     assert report.warning_count == 0
     assert "framework-crosswalks" in report.remaining_capability_ids
-    assert "Cannot claim federal-control alignment evidence." in report.blocked_claims
+    assert "Cannot claim framework crosswalks capability completion yet." in report.blocked_claims
 
 
-def test_serious_open_source_claim_is_allowed_when_all_target_capabilities_are_complete() -> None:
+def test_serious_open_source_claim_is_allowed_when_original_target_path_is_complete() -> None:
+    report = PrototypeReadinessGate().evaluate(
+        completed_capability_ids=_required_capability_ids(),
+        requested_claim_level=PrototypeClaimLevel.SERIOUS_OPEN_SOURCE_PROTOTYPE,
+    )
+
+    assert report.decision is PrototypeReadinessDecision.ALLOW
+    assert report.permits_requested_claim()
+    assert report.achieved_percent == 80
+    assert report.remaining_capability_ids == (
+        "assurance-dossier",
+        "claim-guardrails",
+        "federal-evaluation-profile",
+    )
+    assert report.findings == ()
+
+
+def test_full_local_model_reaches_one_hundred_percent_without_extra_claims() -> None:
     report = PrototypeReadinessGate().evaluate(
         completed_capability_ids=_all_capability_ids(),
         requested_claim_level=PrototypeClaimLevel.SERIOUS_OPEN_SOURCE_PROTOTYPE,
@@ -57,7 +82,7 @@ def test_serious_open_source_claim_is_allowed_when_all_target_capabilities_are_c
 
     assert report.decision is PrototypeReadinessDecision.ALLOW
     assert report.permits_requested_claim()
-    assert report.achieved_percent == 80
+    assert report.achieved_percent == 100
     assert report.remaining_capability_ids == ()
     assert report.findings == ()
 
@@ -99,12 +124,16 @@ def test_operational_and_certified_claims_are_always_blocked_by_repo_only_eviden
     )
 
 
-def test_readiness_gate_rejects_unknown_completed_capability_ids() -> None:
-    with pytest.raises(ContractValueError, match="Unknown prototype capability ID"):
-        PrototypeReadinessGate().evaluate(
-            completed_capability_ids=("not-real",),
-            requested_claim_level=PrototypeClaimLevel.LOCAL_REFERENCE_RUNTIME,
-        )
+def test_readiness_gate_warns_for_unknown_completed_capability_ids() -> None:
+    report = PrototypeReadinessGate().evaluate(
+        completed_capability_ids=("not-real",),
+        requested_claim_level=PrototypeClaimLevel.LOCAL_REFERENCE_RUNTIME,
+    )
+
+    assert report.decision is PrototypeReadinessDecision.LIMIT
+    assert report.warning_count == 2
+    assert "not-real" in report.completed_capability_ids
+    assert any(finding.finding_id == "unexpected-not-real" for finding in report.findings)
 
 
 def test_readiness_gate_rejects_duplicate_target_ids() -> None:
