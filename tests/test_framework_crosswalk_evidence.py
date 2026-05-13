@@ -196,7 +196,7 @@ def test_framework_evidence_validator_reports_integrity_errors_and_warnings() ->
         bundles=(_bundle(status=EvidenceStatus.INVALID),)
     ).validate(FrameworkCrosswalk(objectives=(_objective(),), mappings=(_mapping(),)))
 
-    assert invalid_report.blocker_count == 1
+    assert invalid_report.blocker_count == 2
     assert "is marked invalid" in invalid_report.findings[-1].message
 
     unhashed_bundle = EvidenceBundle(
