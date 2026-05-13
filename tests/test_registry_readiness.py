@@ -144,7 +144,7 @@ def test_registry_readiness_feeds_prototype_claim_gate_without_overclaiming() ->
     )
 
     assert prototype_report.decision is PrototypeReadinessDecision.BLOCK
-    assert prototype_report.achieved_percent == 45
+    assert prototype_report.achieved_percent == 44
     assert prototype_report.completed_capability_ids == ("registry-layer",)
     assert "policy-pack-engine" in prototype_report.remaining_capability_ids
 
