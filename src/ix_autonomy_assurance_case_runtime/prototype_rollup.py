@@ -32,7 +32,9 @@ from ix_autonomy_assurance_case_runtime.prototype_target import (
 class CapabilityLayerReport(Protocol):
     """Protocol implemented by capability-layer readiness reports."""
 
-    capability_id: str
+    @property
+    def capability_id(self) -> str:
+        """Return the canonical capability ID for this layer."""
 
     def is_complete(self) -> bool:
         """Return whether the capability layer is complete."""
@@ -236,11 +238,17 @@ class PrototypeCapabilityRollupEvaluator:
     ) -> PrototypeCapabilityRollupReport:
         """Evaluate capability-layer reports as one prototype maturity rollup."""
 
-        layer_entries = tuple(_entry_from_report(index, report) for index, report in enumerate(layer_reports, start=1))
+        layer_entries = tuple(
+            _entry_from_report(index, report)
+            for index, report in enumerate(layer_reports, start=1)
+        )
         expected_ids = (
             tuple(_default_expected_capability_ids())
             if expected_capability_ids is None
-            else _normalize_identifier_tuple(tuple(expected_capability_ids), "expected_capability_ids")
+            else _normalize_identifier_tuple(
+                tuple(expected_capability_ids),
+                "expected_capability_ids",
+            )
         )
         completed_ids = _unique_completed_capability_ids(layer_entries)
         duplicate_ids = _duplicate_completed_capability_ids(layer_entries)
