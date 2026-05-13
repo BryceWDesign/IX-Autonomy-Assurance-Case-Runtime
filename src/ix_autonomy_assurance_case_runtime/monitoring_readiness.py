@@ -361,7 +361,10 @@ class MonitoringLayerReadinessEvaluator:
 
         if any(finding.severity.blocks_completion() for finding in findings):
             return MonitoringReadinessDecision.BLOCKED
-        if any(finding.severity is MonitoringReadinessFindingSeverity.WARNING for finding in findings):
+        if any(
+            finding.severity is MonitoringReadinessFindingSeverity.WARNING
+            for finding in findings
+        ):
             return MonitoringReadinessDecision.LIMITED
         return MonitoringReadinessDecision.COMPLETE
 
