@@ -155,3 +155,19 @@ def test_export_package_public_exports_are_available() -> None:
     for export_name in expected_exports:
         assert export_name in ix.__all__
         assert hasattr(ix, export_name)
+
+
+def test_prototype_rollup_public_exports_are_available() -> None:
+    expected_exports = (
+        "CapabilityLayerReport",
+        "CapabilityLayerRollupEntry",
+        "PrototypeCapabilityRollupEvaluator",
+        "PrototypeCapabilityRollupReport",
+        "PrototypeRollupFinding",
+        "PrototypeRollupFindingSeverity",
+        "PrototypeRollupFindingSource",
+    )
+
+    for export_name in expected_exports:
+        assert export_name in ix.__all__
+        assert hasattr(ix, export_name)
