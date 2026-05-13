@@ -11,7 +11,10 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
-from ix_autonomy_assurance_case_runtime.contracts import ContractValueError, RuntimeStrEnum
+from ix_autonomy_assurance_case_runtime.contracts import (
+    ContractValueError,
+    RuntimeStrEnum,
+)
 
 BASELINE_MATURITY_PERCENT = 40
 SERIOUS_PROTOTYPE_TARGET_PERCENT = 80
@@ -108,6 +111,27 @@ class PrototypeCapabilityTarget:
         return self.title
 
     @property
+    def purpose(self) -> str:
+        """Compatibility alias for the capability description."""
+
+        return self.description
+
+    @property
+    def acceptance_signals(self) -> tuple[str, ...]:
+        """Compatibility alias for evidence expectations."""
+
+        return self.evidence_expectations
+
+    @property
+    def blocked_claims_until_met(self) -> tuple[str, ...]:
+        """Return claim limits that apply while this capability remains incomplete."""
+
+        return (
+            f"Cannot claim {self.title.lower()} capability completion yet.",
+            "Cannot claim serious open-source prototype completion yet.",
+        )
+
+    @property
     def percent_contribution(self) -> int:
         """Compatibility alias for the maturity increment."""
 
@@ -118,6 +142,17 @@ class PrototypeCapabilityTarget:
         """Compatibility alias for the maturity increment."""
 
         return self.maturity_increment_percent
+
+    @property
+    def maturity_lift_points(self) -> int:
+        """Compatibility alias for the maturity increment."""
+
+        return self.maturity_increment_percent
+
+    def requires_audit_artifact(self) -> bool:
+        """Return whether this target expects reviewable evidence artifacts."""
+
+        return bool(self.evidence_expectations)
 
     def is_completed_by(self, completed_capability_ids: Iterable[str]) -> bool:
         """Return whether this target is completed by the supplied capability IDs."""
@@ -217,6 +252,18 @@ class PrototypeMaturityAssessment:
 
         return len(self.target_capability_ids)
 
+    @property
+    def remaining_capability_ids(self) -> tuple[str, ...]:
+        """Compatibility alias for missing capability IDs."""
+
+        return self.missing_capability_ids
+
+    @property
+    def remaining_percent(self) -> int:
+        """Return maturity points still needed for the serious prototype target."""
+
+        return max(self.target_percent - self.achieved_percent, 0)
+
     def target_percent_met(self) -> bool:
         """Return whether achieved percent meets the serious prototype target."""
 
@@ -224,6 +271,11 @@ class PrototypeMaturityAssessment:
 
     def is_serious_prototype_target_met(self) -> bool:
         """Return whether achieved percent meets the serious prototype target."""
+
+        return self.target_percent_met()
+
+    def meets_serious_prototype_target(self) -> bool:
+        """Compatibility alias for the serious prototype target decision."""
 
         return self.target_percent_met()
 
@@ -404,6 +456,7 @@ def build_serious_prototype_targets() -> tuple[PrototypeCapabilityTarget, ...]:
                 "runtime artifacts",
                 "closure artifacts",
             ),
+            required_for_serious_prototype=False,
         ),
         PrototypeCapabilityTarget(
             capability_id="claim-guardrails",
@@ -419,6 +472,7 @@ def build_serious_prototype_targets() -> tuple[PrototypeCapabilityTarget, ...]:
                 "prohibited phrase rules",
                 "non-endorsement claims",
             ),
+            required_for_serious_prototype=False,
         ),
         PrototypeCapabilityTarget(
             capability_id="federal-evaluation-profile",
@@ -434,6 +488,7 @@ def build_serious_prototype_targets() -> tuple[PrototypeCapabilityTarget, ...]:
                 "evaluation mappings",
                 "bounded disclaimer",
             ),
+            required_for_serious_prototype=False,
         ),
     )
 
@@ -444,12 +499,25 @@ def serious_prototype_capability_ids() -> tuple[str, ...]:
     return tuple(target.capability_id for target in build_serious_prototype_targets())
 
 
+def required_serious_prototype_capability_ids() -> tuple[str, ...]:
+    """Return capability IDs required to claim 80% serious prototype maturity."""
+
+    return tuple(
+        target.capability_id
+        for target in build_serious_prototype_targets()
+        if target.required_for_serious_prototype
+    )
+
+
 def assess_serious_prototype_maturity(
     completed_capability_ids: Iterable[str],
 ) -> PrototypeMaturityAssessment:
     """Assess local prototype maturity from completed capability IDs."""
 
-    completed = tuple(_require_identifier(value, "completed_capability_ids") for value in completed_capability_ids)
+    completed = tuple(
+        _require_identifier(value, "completed_capability_ids")
+        for value in completed_capability_ids
+    )
     target_by_id = {
         target.capability_id: target for target in build_serious_prototype_targets()
     }
